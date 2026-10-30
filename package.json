@@ -5,9 +5,9 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node --env-file=.env dist/index.js",
     "test": "vitest",
     "test:run": "vitest run"
   },
@@ -15,17 +15,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^18.0.9",
     "express": "^5.3.0",
-    "pg": "..."
+    "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "supertest": "^7.3.1",
-    "vitest": "^4.1.12",
-    "typescript": "...",
-    "tsx": "...",
-    "@types/node": "...",
-    "@types/express": "...",
-    "@types/pg": "...",
-    "@types/supertest": "..."
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.12"
   }
 }
