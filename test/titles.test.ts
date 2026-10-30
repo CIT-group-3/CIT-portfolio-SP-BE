@@ -26,7 +26,7 @@ describe("GET /titles/:id", () => {
     });
   });
 
-  it("identifies tge recource by URI and not bare id", async () => {
+  it("identifies the resource by URI and not bare id", async () => {
     const res = await request(app).get("/titles/tt21050232");
 
     expect(res.body.url).toBe("/titles/tt21050232");
