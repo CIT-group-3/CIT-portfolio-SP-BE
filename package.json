@@ -1,0 +1,31 @@
+{
+  "name": "cit-portfolio-sp-be",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0",
+    "pg": "..."
+  },
+  "devDependencies": {
+    "supertest": "^7.3.1",
+    "vitest": "^4.1.12",
+    "typescript": "...",
+    "tsx": "...",
+    "@types/node": "...",
+    "@types/express": "...",
+    "@types/pg": "...",
+    "@types/supertest": "..."
+  }
+}
