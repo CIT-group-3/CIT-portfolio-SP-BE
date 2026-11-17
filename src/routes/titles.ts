@@ -1,5 +1,6 @@
  import { Router } from "express";
  import { findMediaById, findTitles } from "../data/titles.js";
+ import { ApiError } from "../middleware/errors.js";
 // export const titlesRouter = Router();
 
 // titlesRouter.get("/:id", async (req, res) => {
@@ -33,18 +34,17 @@ titlesRouter.get("/", async (req, res, next) => {
     );
 
     if (!pagination) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid pagination parameters",
-          details: [
-            {
-              field: "page",
-              message: "Page and pageSize must be positive integers",
-            },
-          ],
-        },
-      });
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid pagination parameters",
+        [
+          {
+            field: "page",
+            message: "Page and pageSize must be positive integers",
+          },
+        ],
+      );
     }
 
     const { page, pageSize } = pagination;
@@ -71,12 +71,7 @@ titlesRouter.get("/:id", async (req, res, next) => {
     const media = await findMediaById(id);
 
     if (!media) {
-      return res.status(404).json({
-        error: {
-          code: "NOT_FOUND",
-          message: "Title not found",
-        },
-      });
+      throw new ApiError(404, "NOT_FOUND", "Title not found");
     }
 
     return res.json(toTitleDto(media));
