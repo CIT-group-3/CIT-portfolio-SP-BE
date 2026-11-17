@@ -49,11 +49,6 @@ The following table describes the planned API. Endpoints are marked as implement
 | `/users/me/search-history/{searchId}` | GET | Retrieve one search-history entry | Planned |
 | `/users/me/search-history/{searchId}` | PATCH | Update a search-history entry | Planned |
 | `/users/me/search-history/{searchId}` | DELETE | Delete a search-history entry | Planned |
-| `/framework-data` | GET | Retrieve framework-managed data | Planned |
-| `/framework-data` | POST | Create framework-managed data | Planned |
-| `/framework-data/{id}` | GET | Retrieve one framework-data record | Planned |
-| `/framework-data/{id}` | PATCH | Update framework-managed data | Planned |
-| `/framework-data/{id}` | DELETE | Delete framework-managed data | Planned |
 
 ### Title Search Functionality
 
