@@ -5,8 +5,8 @@ export interface MediaRow {
   media_type: string;
   title: string;
   is_adult: boolean;
-  release_year: string | null;
-  end_year: string | null;
+  release_year: number | null;
+  end_year: number | null;
   runtime: number | null;
   plot: string | null;
   poster: string | null;

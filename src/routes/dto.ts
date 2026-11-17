@@ -2,7 +2,7 @@ import type { MediaRow } from "../data/titles.js";
 
 export function toTitleDto(row: MediaRow) {
   return {
-    url: `/titles/${row.id}`,
+    uri: `/titles/${encodeURIComponent(row.id)}`,
     type: row.media_type,
     title: row.title,
     releaseYear: row.release_year,
@@ -28,7 +28,6 @@ export function toTitlesListDto(
 
   return {
     items: rows.map(toTitleDto),
-
     pagination: {
       page,
       pageSize,
