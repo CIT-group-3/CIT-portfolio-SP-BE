@@ -13,7 +13,6 @@ describe("GET /titles/:id", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers["content-type"]).toMatch(/json/);
-
     expect(res.body).toEqual({
       uri: "/titles/tt21050232",
       type: "tvSeries",

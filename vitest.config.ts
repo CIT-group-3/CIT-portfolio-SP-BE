@@ -4,5 +4,6 @@ import { loadEnv } from "vite";
 export default defineConfig({
   test: {
     env: loadEnv("", process.cwd(), ""),
+    exclude: ["**/node_modules/**", "**/dist/**"],
   },
 });
