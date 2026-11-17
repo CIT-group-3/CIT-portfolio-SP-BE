@@ -4,28 +4,87 @@ Backend REST API for the RUC Computer Science portfolio project (Subproject 2).
 
 Built with Node.js, TypeScript, Express 5 and PostgreSQL.
 
-## API design and implementation status
+
+## API Overview
+
+The API provides access to IMDb-based title and person data, user accounts, bookmarks, ratings, search functionality, recommendations, and application-managed framework data.
+
+The API distinguishes between read-only IMDb data and application-managed data. IMDb data is read-only, while user and framework data support the relevant create, read, update, and delete operations.
 
 The following table describes the planned API. Endpoints are marked as implemented or planned so that this document remains the reference for the complete project scope.
 
 | URI | Method | What it does | Status |
-| --- | --- | --- | --- |
+|---|---|---|---|
 | `/` | GET | API welcome message and documentation location | Implemented |
 | `/titles` | GET | Paged list of titles | Implemented |
-| `/titles/{id}` | GET | One title | Implemented |
-| `/titles/{id}/similar` | GET | Similar movies | Planned |
-| `/names/{id}` | GET | One person | Planned |
-| `/names/{id}/coplayers` | GET | Frequent co-players | Planned |
-| `/search/titles?q=...` | GET | String search | Planned |
-| `/users` | POST | Register | Implemented |
-| `/users/me` | GET | Get the authenticated user's profile | Implemented |
+| `/titles/{id}` | GET | Retrieve one title | Implemented |
+| `/titles/{id}/similar` | GET | Retrieve similar movies | Planned |
+| `/titles/{id}/popular-actors` | GET | Retrieve popular actors associated with a title | Planned |
+| `/titles/{id}/ratings/application` | GET | Retrieve application-level rating statistics for a title | Planned |
+| `/people` | GET | Paged list of people | Planned |
+| `/people/{id}` | GET | Retrieve one person | Planned |
+| `/people/{id}/co-players` | GET | Retrieve frequent co-players of a person | Planned |
+| `/people/{id}/words` | GET | Retrieve word-frequency information associated with a person's work | Planned |
+| `/title-searches` | POST | Search titles using supported search modes | Planned |
+| `/person-searches` | POST | Search for people | Planned |
+| `/users` | POST | Register a new user | Implemented |
+| `/users/me` | GET | Retrieve the authenticated user's profile | Implemented |
+| `/users/me` | PATCH | Update the authenticated user's profile | Planned |
+| `/users/me` | DELETE | Delete the authenticated user's account | Planned |
+| `/users/me/password` | PATCH | Change the authenticated user's password | Planned |
 | `/auth/login` | POST | Log in and receive an authentication cookie | Implemented |
 | `/auth/logout` | POST | Log out and clear the authentication cookie | Implemented |
-| `/users/{id}/bookmarks` | GET / POST | List or add bookmarks | Planned |
-| `/users/{id}/bookmarks/{titleId}` | DELETE | Remove a bookmark | Planned |
-| `/titles/{id}/rating` | PUT | Rate a title | Planned |
+| `/users/me/bookmarks/titles` | GET | List the user's bookmarked titles | Planned |
+| `/users/me/bookmarks/titles` | POST | Add a title to the user's bookmarks | Planned |
+| `/users/me/bookmarks/titles/{titleId}` | DELETE | Remove a title from the user's bookmarks | Planned |
+| `/users/me/bookmarks/people` | GET | List the user's bookmarked people | Planned |
+| `/users/me/bookmarks/people` | POST | Add a person to the user's bookmarks | Planned |
+| `/users/me/bookmarks/people/{personId}` | DELETE | Remove a person from the user's bookmarks | Planned |
+| `/users/me/ratings` | GET | Retrieve the user's rating history | Planned |
+| `/users/me/ratings` | POST | Create a rating for a title | Planned |
+| `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Planned |
+| `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Planned |
+| `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Planned |
+| `/users/me/search-history` | GET | Retrieve the user's search history | Planned |
+| `/users/me/search-history/{searchId}` | GET | Retrieve one search-history entry | Planned |
+| `/users/me/search-history/{searchId}` | PATCH | Update a search-history entry | Planned |
+| `/users/me/search-history/{searchId}` | DELETE | Delete a search-history entry | Planned |
+| `/framework-data` | GET | Retrieve framework-managed data | Planned |
+| `/framework-data` | POST | Create framework-managed data | Planned |
+| `/framework-data/{id}` | GET | Retrieve one framework-data record | Planned |
+| `/framework-data/{id}` | PATCH | Update framework-managed data | Planned |
+| `/framework-data/{id}` | DELETE | Delete framework-managed data | Planned |
 
-Additional planned functionality includes rating history, search history, advanced title and person search, popular actors, word frequency, and CRUD operations for framework data. The API design will be extended as implementation progresses.
+### Title Search Functionality
+
+`POST /title-searches` will support multiple search modes through the request body:
+
+- **Basic search:** Search titles using a text query.
+- **Structured search:** Search using structured criteria and filters.
+- **Exact search:** Find exact title matches.
+- **Best-match search:** Rank results by relevance.
+- **Related-words search:** Expand searches using related words.
+- **Weighted search:** Rank results using weighted search criteria.
+
+### Person Search Functionality
+
+`POST /person-searches` will provide person-search functionality, including relevant matching and ranking capabilities.
+
+### Additional Functionality
+
+The API will also support:
+
+- User rating history and application-level title rating statistics.
+- Search history management.
+- Title and person bookmarks.
+- Similar-title recommendations.
+- Co-player analysis and popular actor retrieval.
+- Word-frequency analysis.
+- Full CRUD operations for application-managed framework data.
+
+All collection endpoints returning lists will support pagination where applicable. Protected user endpoints will require authentication and operate on the currently authenticated user.
+
+The API design will be extended as implementation progresses. IMDb data will remain read-only, while application-managed data will support the required modifications.
 
 ## Installation and setup
 
