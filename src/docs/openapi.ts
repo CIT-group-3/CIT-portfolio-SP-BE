@@ -53,6 +53,18 @@ export const openApiSpec = {
           poster: { type: "string", nullable: true },
         },
       },
+      SimilarMovie: {
+        type: "object",
+        properties: {
+          media_id: { type: "string", example: "tt0111161" },
+          title: { type: "string", example: "The Shawshank Redemption" },
+          similarity: {
+            type: "number",
+            example: 0.5,
+            description: "Genre similarity score between 0 and 1",
+          },
+        },
+      },
       Person: {
         type: "object",
         properties: {
@@ -60,6 +72,18 @@ export const openApiSpec = {
           name: { type: "string", example: "Tim Robbins" },
           birthYear: { type: "integer", nullable: true, example: 1958 },
           deathYear: { type: "integer", nullable: true, example: null },
+        },
+      },
+      CoPlayer: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/people/nm0000741" },
+          name: { type: "string", example: "Tim Allen" },
+          frequency: {
+            type: "integer",
+            example: 2,
+            description: "Number of movies shared with the requested actor",
+          },
         },
       },
       KnownForTitle: {
@@ -258,6 +282,58 @@ export const openApiSpec = {
         },
       },
     },
+
+    "/titles/similar": {
+        get: {
+          tags: ["Titles"],
+          summary: "Find similar movies",
+          description:
+            "Returns movies with similar genres using the existing SP1 database function. The movie title must match exactly. Results are ordered by similarity, highest first.",
+          parameters: [
+            {
+              name: "title",
+              in: "query",
+              required: true,
+              description: "Exact movie title",
+              schema: { type: "string", example: "Let It Ride" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "List of similar movies",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      items: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/SimilarMovie" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Movie title is required",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Error" },
+                },
+              },
+            },
+            "404": {
+              description: "Movie not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Error" },
+                },
+              },
+            },
+          },
+        },
+      },
     "/titles/{id}": {
       get: {
         tags: ["Titles"],
@@ -367,6 +443,57 @@ export const openApiSpec = {
         },
       },
     },
+    "/people/coplayers": {
+        get: {
+          tags: ["People"],
+          summary: "Find an actor's co-players",
+          description:
+            "Returns actors who appeared in movies with the specified actor, ordered by the number of shared movies. The actor name must match exactly and identify one person.",
+          parameters: [
+            {
+              name: "name",
+              in: "query",
+              required: true,
+              description: "Exact actor name (1–100 characters)",
+              schema: { type: "string", example: "Tom Hanks" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "List of co-players",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      items: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/CoPlayer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Invalid or ambiguous actor name",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Error" },
+                },
+              },
+            },
+            "404": {
+              description: "Actor not found",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Error" },
+                },
+              },
+            },
+          },
+        },
+      },
     "/people/{id}": {
       get: {
         tags: ["People"],

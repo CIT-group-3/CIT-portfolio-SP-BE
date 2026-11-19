@@ -5,6 +5,7 @@ import {
   findPersonById,
   findPersonKnownFor,
   searchPeople,
+  findCoPlayers,
 } from "../data/people.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errors.js";
@@ -126,6 +127,68 @@ peopleRouter.get("/search", requireAuth, async (req, res, next) => {
       ),
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+// GET /people/coplayers?name=Tom%20Hanks
+// Finds actors who appeared in movies with the specified actor.
+peopleRouter.get("/coplayers", async (req, res, next) => {
+  try {
+    const name = req.query.name;
+
+    if (
+      typeof name !== "string" ||
+      name.trim().length === 0 ||
+      name.trim().length > 100
+    ) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Actor name must contain between 1 and 100 characters",
+      );
+    }
+
+    const actors = await findCoPlayers(name.trim());
+
+    return res.json({
+      items: actors.map((actor) => ({
+        uri: `/people/${encodeURIComponent(actor.nconst)}`,
+        name: actor.primaryname,
+        frequency: actor.frequency,
+      })),
+    });
+  } catch (error) {
+    // The SP1 function uses PostgreSQL error P0001 for missing
+    // actors and ambiguous actor names.
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P0001"
+    ) {
+      const message =
+        "message" in error && typeof error.message === "string"
+          ? error.message
+          : "";
+
+      if (message.includes("not found")) {
+        return next(
+          new ApiError(404, "NOT_FOUND", "Actor not found"),
+        );
+      }
+
+      if (message.includes("ambiguous")) {
+        return next(
+          new ApiError(
+            400,
+            "VALIDATION_ERROR",
+            "Actor name is ambiguous; provide a more specific name",
+          ),
+        );
+      }
+    }
+
     next(error);
   }
 });

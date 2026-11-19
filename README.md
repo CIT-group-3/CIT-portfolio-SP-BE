@@ -4,34 +4,26 @@ Backend REST API for the RUC Computer Science portfolio project (Subproject 2).
 
 Built with Node.js, TypeScript, Express 5 and PostgreSQL.
 
-
 ## API Overview
 
-The API provides access to IMDb-based title and person data, user accounts, bookmarks, ratings, search functionality, recommendations, and application-managed framework data.
+The API provides access to IMDb-based title and person data, user accounts, authentication, bookmarks, ratings, search functionality and recommendations.
 
-The API distinguishes between read-only IMDb data and application-managed data. IMDb data is read-only, while user and framework data support the relevant create, read, update, and delete operations.
+IMDb data is read-only. Application-managed data, such as user accounts, bookmarks and ratings, supports the relevant create, read, update and delete operations.
 
-The following table describes the API scope. Each endpoint is marked as implemented or planned to distinguish the current functionality from the remaining project requirements.
+The following table describes the current API scope.
 
 | URI | Method | What it does | Status |
 |---|---|---|---|
 | `/` | GET | API welcome message and documentation location | Implemented |
 | `/titles` | GET | Paged list of titles | Implemented |
 | `/titles/{id}` | GET | Retrieve one title | Implemented |
-| `/titles/{id}/similar` | GET | Retrieve similar movies | Planned |
-| `/titles/{id}/popular-actors` | GET | Retrieve popular actors associated with a title | Planned |
-| `/titles/{id}/ratings/application` | GET | Retrieve application-level rating statistics for a title | Planned |
+| `/titles/similar?title={title}` | GET | Find movies similar to a specified movie | Implemented |
 | `/people` | GET | Paged list of people | Implemented |
-| `/people/search` | GET | Search people by name and record the search in user history | Implemented |
-| `/people/{id}` | GET | Retrieve one person | Implemented |
-| `/people/{id}/co-players` | GET | Retrieve frequent co-players of a person | Planned |
-| `/people/{id}/words` | GET | Retrieve word-frequency information associated with a person's work | Planned |
-| `/title-searches` | POST | Search titles using supported search modes | Planned |
+| `/people/search?q={query}` | GET | Search people by name and record the search in user history | Implemented |
+| `/people/{id}` | GET | Retrieve one person and known-for titles | Implemented |
+| `/people/coplayers?name={name}` | GET | Find actors who appeared in movies with a specified actor | Implemented |
 | `/users` | POST | Register a new user | Implemented |
 | `/users/me` | GET | Retrieve the authenticated user's profile | Implemented |
-| `/users/me` | PATCH | Update the authenticated user's profile | Planned |
-| `/users/me` | DELETE | Delete the authenticated user's account | Planned |
-| `/users/me/password` | PATCH | Change the authenticated user's password | Planned |
 | `/auth/login` | POST | Log in and receive an authentication cookie | Implemented |
 | `/auth/logout` | POST | Log out and clear the authentication cookie | Implemented |
 | `/users/me/bookmarks/media` | GET | List the user's bookmarked titles | Implemented |
@@ -40,50 +32,38 @@ The following table describes the API scope. Each endpoint is marked as implemen
 | `/users/me/bookmarks/people` | GET | List the user's bookmarked people | Implemented |
 | `/users/me/bookmarks/people` | POST | Add a person to the user's bookmarks | Implemented |
 | `/users/me/bookmarks/people/{personId}` | DELETE | Remove a person from the user's bookmarks | Implemented |
-| `/users/me/ratings` | GET | Retrieve the user's rating history | Planned |
-| `/users/me/ratings` | POST | Create a rating for a title | Planned |
-| `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Planned |
-| `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Planned |
-| `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Planned |
+| `/users/me/ratings` | GET | Retrieve the user's rating history | Implemented |
+| `/users/me/ratings` | POST | Create a rating for a title | Implemented |
+| `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Implemented |
+| `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Implemented |
+| `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Implemented |
+| `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Planned |
+| `/title-searches` | POST | Search titles using supported search modes | Planned |
 | `/users/me/search-history` | GET | Retrieve the user's search history | Planned |
-| `/users/me/search-history/{searchId}` | GET | Retrieve one search-history entry | Planned |
-| `/users/me/search-history/{searchId}` | PATCH | Update a search-history entry | Planned |
-| `/users/me/search-history/{searchId}` | DELETE | Delete a search-history entry | Planned |
 
-### Title Search Functionality
+### Similar Movies
 
-`POST /title-searches` will support multiple search modes through the request body:
+`GET /titles/similar` accepts a movie title and returns movies ranked by genre similarity. It reuses the existing Subproject 1 `find_similar_movies` database function.
 
-- **Basic search:** Search titles using a text query.
-- **Structured search:** Search using structured criteria and filters.
-- **Exact search:** Find exact title matches.
-- **Best-match search:** Rank results by relevance.
-- **Related-words search:** Expand searches using related words.
-- **Weighted search:** Rank results using weighted search criteria.
+### Co-players
 
-### Person Search Functionality
+`GET /people/coplayers` accepts an exact actor name and returns other actors ranked by the number of movies they share. It reuses the existing Subproject 1 `find_coplayers` database function.
 
-`GET /people/search` supports searching for people by name using a query parameter.
+### Person Search
+
+`GET /people/search` supports searching for people by name.
 
 - Search requires authentication because searches are recorded in the user's search history.
 - Results support pagination.
 - The endpoint reuses the existing Subproject 1 `string_search_person` database function.
 
-### Additional Functionality
+### Ratings and Bookmarks
 
-The API will also support:
+Authenticated users can manage their own title ratings and title/person bookmarks. Database operations use the authenticated user's ID, so users access their own framework data.
 
-- User rating history and application-level title rating statistics.
-- Search history management.
-- Title and person bookmarks.
-- Similar-title recommendations.
-- Co-player analysis and popular actor retrieval.
-- Word-frequency analysis.
-- Full CRUD operations for application-managed framework data.
+### Planned Functionality
 
-All collection endpoints returning lists will support pagination where applicable. Protected user endpoints will require authentication and operate on the currently authenticated user.
-
-The API design will be extended as implementation progresses. IMDb data will remain read-only, while application-managed data will support the required modifications.
+Remaining functionality includes word-frequency analysis, additional title-search modes and search-history management. The API will be extended as implementation progresses.
 
 ## Installation and setup
 
@@ -126,7 +106,8 @@ PGDATABASE=your_database
 PGUSER=your_user
 PGPASSWORD=your_password
 PORT=3030
-JWT_SECRET=your_random_secret
+JWT_SECRET=replace_with_a_random_secret_of_at_least_32_characters
+CORS_ORIGIN=http://localhost:5173
 ```
 
 Replace the database placeholders with the credentials for your PostgreSQL database.
@@ -174,19 +155,20 @@ Authentication uses JSON Web Tokens (JWT) signed with HS256.
 
 ## Pagination
 
-`GET /titles` and `GET /people` support pagination through the following query parameters:
+The following endpoints support pagination:
+
+- `GET /titles`
+- `GET /people`
+- `GET /people/search`
+
+Pagination uses two query parameters:
+
 | Parameter | Default | Description |
-| --- | ---: | --- |
-| `page` | 1 | Requested page number |
-| `pageSize` | 20 | Number of titles per page |
+|---|---:|---|
+| `page` | 1 | Page number, starting at 1 |
+| `pageSize` | 20 | Number of results per page (maximum 100) |
 
-Example:
-
-```http
-GET /titles?page=1&pageSize=20
-```
-
-The response includes the requested page, page size, total item count, total page count, and previous/next page links where applicable.
+Paginated responses include the requested page, page size, total number of items, total number of pages, and links to the previous and next pages when available.
 
 ## Error handling
 
