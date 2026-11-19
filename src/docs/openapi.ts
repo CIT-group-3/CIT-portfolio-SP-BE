@@ -5,7 +5,7 @@ export const openApiSpec = {
     title: "CIT Portfolio Group-3 Backend API",
     version: "1.0.0",
     description:
-      "REST API for the CIT Portfolio project, including titles, people, user registration, JWT authentication and bookmarks.",
+"REST API for the CIT Portfolio project, including titles, people, user registration, JWT authentication, bookmarks and ratings.",
   },
   tags: [
     { name: "Titles", description: "Browse and retrieve media titles" },
@@ -13,6 +13,7 @@ export const openApiSpec = {
     { name: "Users", description: "User registration and account information" },
     { name: "Authentication", description: "Login and logout operations" },
     { name: "Bookmarks", description: "Manage the authenticated user's media and person bookmarks" },
+    { name: "Ratings", description: "Manage the authenticated user's media ratings" },
   ],
   components: {
     securitySchemes: {
@@ -176,6 +177,26 @@ export const openApiSpec = {
           items: {
             type: "array",
             items: { $ref: "#/components/schemas/PersonBookmark" },
+          },
+        },
+      },
+      UserRating: {
+        type: "object",
+        properties: {
+          media_id: { type: "string", example: "tt0111161" },
+          title: { type: "string", example: "The Shawshank Redemption" },
+          media_type: { type: "string", example: "movie" },
+          rating: { type: "integer", minimum: 1, maximum: 10, example: 9 },
+          review: { type: "string", nullable: true, example: null },
+          timestamp: { type: "string", example: "2026-11-19" },
+        },
+      },
+      UserRatings: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/UserRating" },
           },
         },
       },
@@ -587,6 +608,153 @@ export const openApiSpec = {
         description: "Clears the authentication cookie.",
         responses: {
           "200": { description: "Successfully logged out" },
+        },
+      },
+    },
+
+    "/users/me/ratings": {
+      get: {
+        tags: ["Ratings"],
+        summary: "List the authenticated user's ratings",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of ratings",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserRatings" },
+              },
+            },
+          },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+      post: {
+        tags: ["Ratings"],
+        summary: "Rate a media title",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["mediaId", "rating"],
+                properties: {
+                  mediaId: { type: "string", example: "tt0111161" },
+                  rating: { type: "integer", minimum: 1, maximum: 10, example: 9 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Rating successfully created",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    mediaId: { type: "string", example: "tt0111161" },
+                    rating: { type: "integer", example: 9 },
+                    averageRating: { type: "number", nullable: true, example: 9 },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid media ID or rating" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Media not found" },
+          "409": { description: "Rating already exists" },
+        },
+      },
+    },
+    "/users/me/ratings/{titleId}": {
+      get: {
+        tags: ["Ratings"],
+        summary: "Get the authenticated user's rating for a title",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "titleId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "tt0111161" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Rating details",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserRating" },
+              },
+            },
+          },
+          "400": { description: "Invalid media ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Rating not found" },
+        },
+      },
+      put: {
+        tags: ["Ratings"],
+        summary: "Update the authenticated user's rating",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "titleId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "tt0111161" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["rating"],
+                properties: {
+                  rating: { type: "integer", minimum: 1, maximum: 10, example: 10 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Rating successfully updated",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserRating" },
+              },
+            },
+          },
+          "400": { description: "Invalid media ID or rating" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Rating not found" },
+        },
+      },
+      delete: {
+        tags: ["Ratings"],
+        summary: "Delete the authenticated user's rating",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "titleId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "tt0111161" },
+          },
+        ],
+        responses: {
+          "204": { description: "Rating successfully deleted" },
+          "400": { description: "Invalid media ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Rating not found" },
         },
       },
     },
