@@ -1,3 +1,6 @@
+// Protects routes by requiring a valid JWT from the auth cookie.
+// The verified user ID is attached to the request for downstream
+// route handlers to use.
 import type { RequestHandler } from "express";
 import { verifyToken } from "../auth/token.js";
 import { ApiError } from "./errors.js";

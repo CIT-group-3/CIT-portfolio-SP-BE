@@ -1,3 +1,6 @@
+// Passwords are never stored in plaintext.
+// PBKDF2 uses a random salt and many iterations to make
+// offline password guessing more computationally expensive.
 
 import {
     pbkdf2,
