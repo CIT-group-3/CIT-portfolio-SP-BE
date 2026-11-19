@@ -1,3 +1,5 @@
+// The JWT secret is loaded from the environment rather than
+// hardcoded, so it is not exposed in the source repository.
 
 import jwt from "jsonwebtoken";
 
@@ -13,6 +15,8 @@ export interface AuthTokenPayload {
   userId: number;
 }
 
+// Creates a signed JWT containing the authenticated user's ID.
+// The token expires after one hour.
 export function signToken(userId: number): string {
   return jwt.sign(
     { userId },
@@ -25,6 +29,8 @@ export function signToken(userId: number): string {
   );
 }
 
+// Verifies the JWT signature and expiration, then validates
+// the claims before trusting the user ID.
 export function verifyToken(token: string): AuthTokenPayload {
   const payload = jwt.verify(token, JWT_SECRET, {
     algorithms: ["HS256"],

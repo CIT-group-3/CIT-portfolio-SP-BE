@@ -1,15 +1,18 @@
+
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "CIT Portfolio Group-3 Backend API",
     version: "1.0.0",
     description:
-      "REST API for the CIT Portfolio project, including titles, user registration and JWT-based authentication.",
+      "REST API for the CIT Portfolio project, including titles, people, user registration, JWT authentication and bookmarks.",
   },
   tags: [
     { name: "Titles", description: "Browse and retrieve media titles" },
+    { name: "People", description: "Browse and search people" },
     { name: "Users", description: "User registration and account information" },
     { name: "Authentication", description: "Login and logout operations" },
+    { name: "Bookmarks", description: "Manage the authenticated user's media and person bookmarks" },
   ],
   components: {
     securitySchemes: {
@@ -49,6 +52,37 @@ export const openApiSpec = {
           poster: { type: "string", nullable: true },
         },
       },
+      Person: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/people/nm0000209" },
+          name: { type: "string", example: "Tim Robbins" },
+          birthYear: { type: "integer", nullable: true, example: 1958 },
+          deathYear: { type: "integer", nullable: true, example: null },
+        },
+      },
+      KnownForTitle: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/titles/tt0111161" },
+          title: { type: "string", example: "The Shawshank Redemption" },
+          type: { type: "string", example: "movie" },
+        },
+      },
+      PersonDetails: {
+        allOf: [
+          { $ref: "#/components/schemas/Person" },
+          {
+            type: "object",
+            properties: {
+              knownFor: {
+                type: "array",
+                items: { $ref: "#/components/schemas/KnownForTitle" },
+              },
+            },
+          },
+        ],
+      },
       Pagination: {
         type: "object",
         properties: {
@@ -77,6 +111,71 @@ export const openApiSpec = {
           },
           pagination: {
             $ref: "#/components/schemas/Pagination",
+          },
+        },
+      },
+      PeopleList: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/Person" },
+          },
+          pagination: {
+            $ref: "#/components/schemas/Pagination",
+          },
+        },
+      },
+      PersonSearchList: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                uri: { type: "string", example: "/people/nm0000209" },
+                name: { type: "string", example: "Tim Robbins" },
+              },
+            },
+          },
+          pagination: {
+            $ref: "#/components/schemas/Pagination",
+          },
+        },
+      },
+      MediaBookmark: {
+        type: "object",
+        properties: {
+          media_id: { type: "string", example: "tt0111161" },
+          title: { type: "string", example: "The Shawshank Redemption" },
+          media_type: { type: "string", example: "movie" },
+          timestamp: { type: "string", example: "2026-11-18" },
+        },
+      },
+      PersonBookmark: {
+        type: "object",
+        properties: {
+          person_id: { type: "string", example: "nm0000209" },
+          name: { type: "string", example: "Tim Robbins" },
+          timestamp: { type: "string", example: "2026-11-18" },
+        },
+      },
+      MediaBookmarks: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/MediaBookmark" },
+          },
+        },
+      },
+      PersonBookmarks: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/PersonBookmark" },
           },
         },
       },
@@ -171,6 +270,110 @@ export const openApiSpec = {
         },
       },
     },
+
+    // People endpoints
+    "/people": {
+      get: {
+        tags: ["People"],
+        summary: "List people",
+        description: "Returns a paginated list of people.",
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "pageSize",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated list of people",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PeopleList" },
+              },
+            },
+          },
+          "400": { description: "Invalid pagination parameters" },
+        },
+      },
+    },
+    "/people/search": {
+      get: {
+        tags: ["People"],
+        summary: "Search people by name",
+        description:
+          "Searches people using the existing database search function and records the search in the authenticated user's history.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            required: true,
+            description: "Name or part of a person's name (1–100 characters)",
+            schema: { type: "string", example: "Tim Robbins" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "pageSize",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated person search results",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonSearchList" },
+              },
+            },
+          },
+          "400": { description: "Invalid search or pagination parameters" },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+    },
+    "/people/{id}": {
+      get: {
+        tags: ["People"],
+        summary: "Get a person by ID",
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "IMDb person identifier",
+            schema: { type: "string", example: "nm0000209" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Person details and known-for titles",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonDetails" },
+              },
+            },
+          },
+          "400": { description: "Invalid person ID" },
+          "404": { description: "Person not found" },
+        },
+      },
+    },
+
     "/users": {
       post: {
         tags: ["Users"],
@@ -211,6 +414,134 @@ export const openApiSpec = {
               },
             },
           },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+    },
+    "/users/me/bookmarks/media": {
+      get: {
+        tags: ["Bookmarks"],
+        summary: "List the authenticated user's media bookmarks",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of bookmarked media",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MediaBookmarks" },
+              },
+            },
+          },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+      post: {
+        tags: ["Bookmarks"],
+        summary: "Add a media bookmark",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["mediaId"],
+                properties: {
+                  mediaId: { type: "string", example: "tt0111161" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Media bookmark created" },
+          "400": { description: "Invalid media ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Media not found" },
+          "409": { description: "Bookmark already exists" },
+        },
+      },
+    },
+    "/users/me/bookmarks/media/{mediaId}": {
+      delete: {
+        tags: ["Bookmarks"],
+        summary: "Remove a media bookmark",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "mediaId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "tt0111161" },
+          },
+        ],
+        responses: {
+          "204": { description: "Media bookmark removed" },
+          "400": { description: "Invalid media ID" },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+    },
+    "/users/me/bookmarks/people": {
+      get: {
+        tags: ["Bookmarks"],
+        summary: "List the authenticated user's person bookmarks",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of bookmarked people",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PersonBookmarks" },
+              },
+            },
+          },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+      post: {
+        tags: ["Bookmarks"],
+        summary: "Add a person bookmark",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["personId"],
+                properties: {
+                  personId: { type: "string", example: "nm0000209" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Person bookmark created" },
+          "400": { description: "Invalid person ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Person not found" },
+          "409": { description: "Bookmark already exists" },
+        },
+      },
+    },
+    "/users/me/bookmarks/people/{personId}": {
+      delete: {
+        tags: ["Bookmarks"],
+        summary: "Remove a person bookmark",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "personId",
+            in: "path",
+            required: true,
+            schema: { type: "string", example: "nm0000209" },
+          },
+        ],
+        responses: {
+          "204": { description: "Person bookmark removed" },
+          "400": { description: "Invalid person ID" },
           "401": { description: "Authentication required or invalid token" },
         },
       },

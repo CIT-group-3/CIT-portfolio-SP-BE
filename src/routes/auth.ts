@@ -1,3 +1,5 @@
+// A successful login issues a signed JWT in an HTTP-only cookie,
+// preventing ordinary browser JavaScript from reading the token.
 import { Router } from "express";
 import { verifyPassword } from "../auth/crypto.js";
 import { signToken } from "../auth/token.js";
