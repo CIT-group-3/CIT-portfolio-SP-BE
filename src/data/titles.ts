@@ -12,6 +12,12 @@ export interface MediaRow {
   poster: string | null;
 }
 
+export interface SimilarMovie {
+  media_id: string;
+  title: string;
+  similarity: number;
+}
+
 export interface PaginatedTitles {
   rows: MediaRow[];
   totalItems: number;
@@ -51,4 +57,18 @@ export async function findTitles(
   return {
     rows: titlesResult.rows,
     totalItems: Number(countResult.rows[0]?.total ?? 0),  };
+}
+
+// Find movies similar to a given movie.
+// Reuses the existing SP1 database function.
+export async function findSimilarMovies(
+  title: string,
+): Promise<SimilarMovie[]> {
+  const result = await pool.query<SimilarMovie>(
+    `SELECT media_id, title, similarity::float8 AS similarity
+     FROM find_similar_movies($1)`,
+    [title],
+  );
+
+  return result.rows;
 }

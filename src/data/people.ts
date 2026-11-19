@@ -14,6 +14,12 @@ export interface KnownForTitle {
   media_type: string;
 }
 
+export interface CoPlayer {
+  nconst: string;
+  primaryname: string;
+  frequency: number;
+}
+
 export interface PaginatedPeople {
   rows: PersonRow[];
   totalItems: number;
@@ -130,4 +136,18 @@ export async function searchPeople(
     items,
     totalItems: Number(result.rows[0]?.total_items ?? 0),
   };
+}
+
+// Find actors who appeared in movies with the given actor.
+// Reuses the existing SP1 database function.
+export async function findCoPlayers(
+  actorName: string,
+): Promise<CoPlayer[]> {
+  const result = await pool.query<CoPlayer>(
+    `SELECT nconst, primaryname, frequency::int AS frequency
+     FROM find_coplayers($1)`,
+    [actorName],
+  );
+
+  return result.rows;
 }

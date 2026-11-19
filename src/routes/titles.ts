@@ -1,6 +1,9 @@
  import { Router } from "express";
- import { findMediaById, findTitles } from "../data/titles.js";
- import { ApiError } from "../middleware/errors.js";
+import {
+  findMediaById,
+  findTitles,
+  findSimilarMovies,
+} from "../data/titles.js"; import { ApiError } from "../middleware/errors.js";
 // export const titlesRouter = Router();
 
 // titlesRouter.get("/:id", async (req, res) => {
@@ -63,6 +66,37 @@ titlesRouter.get("/", async (req, res, next) => {
     next(error);
   }
 });
+
+// GET /titles/similar?title=Lost in Liberia
+titlesRouter.get("/similar", async (req, res, next) => {
+  try {
+    const title = req.query.title;
+
+    if (typeof title !== "string" || !title.trim()) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "A movie title is required",
+      );
+    }
+
+    const movies = await findSimilarMovies(title.trim());
+
+    return res.json({ items: movies });
+} catch (error) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P0001"
+  ) {
+    return next(new ApiError(404, "NOT_FOUND", "Movie not found"));
+  }
+
+  next(error);
+}
+  }
+);
 
 // GET /titles/:id
 titlesRouter.get("/:id", async (req, res, next) => {
