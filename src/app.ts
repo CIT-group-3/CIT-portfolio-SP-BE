@@ -9,6 +9,7 @@ import { usersRouter } from "./routes/users.js";
 import { peopleRouter } from "./routes/people.js";
 import { bookmarksRouter } from "./routes/bookmarks.js";
 import { authRouter } from "./routes/auth.js";
+import { ratingsRouter } from "./routes/ratings.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -44,6 +45,7 @@ app.use("/users/me/bookmarks", bookmarksRouter);
 app.use("/auth", authRouter);
 app.use("/titles", titlesRouter);
 app.use("/people", peopleRouter);
+app.use("/users/me/ratings", ratingsRouter);
 
 // Keep these AFTER all registered routes.
 app.use(notFoundHandler);
