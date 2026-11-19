@@ -11,7 +11,7 @@ The API provides access to IMDb-based title and person data, user accounts, book
 
 The API distinguishes between read-only IMDb data and application-managed data. IMDb data is read-only, while user and framework data support the relevant create, read, update, and delete operations.
 
-The following table describes the planned API. Endpoints are marked as implemented or planned so that this document remains the reference for the complete project scope.
+The following table describes the API scope. Each endpoint is marked as implemented or planned to distinguish the current functionality from the remaining project requirements.
 
 | URI | Method | What it does | Status |
 |---|---|---|---|
@@ -21,12 +21,12 @@ The following table describes the planned API. Endpoints are marked as implement
 | `/titles/{id}/similar` | GET | Retrieve similar movies | Planned |
 | `/titles/{id}/popular-actors` | GET | Retrieve popular actors associated with a title | Planned |
 | `/titles/{id}/ratings/application` | GET | Retrieve application-level rating statistics for a title | Planned |
-| `/people` | GET | Paged list of people | Planned |
-| `/people/{id}` | GET | Retrieve one person | Planned |
+| `/people` | GET | Paged list of people | Implemented |
+| `/people/search` | GET | Search people by name and record the search in user history | Implemented |
+| `/people/{id}` | GET | Retrieve one person | Implemented |
 | `/people/{id}/co-players` | GET | Retrieve frequent co-players of a person | Planned |
 | `/people/{id}/words` | GET | Retrieve word-frequency information associated with a person's work | Planned |
 | `/title-searches` | POST | Search titles using supported search modes | Planned |
-| `/person-searches` | POST | Search for people | Planned |
 | `/users` | POST | Register a new user | Implemented |
 | `/users/me` | GET | Retrieve the authenticated user's profile | Implemented |
 | `/users/me` | PATCH | Update the authenticated user's profile | Planned |
@@ -34,12 +34,12 @@ The following table describes the planned API. Endpoints are marked as implement
 | `/users/me/password` | PATCH | Change the authenticated user's password | Planned |
 | `/auth/login` | POST | Log in and receive an authentication cookie | Implemented |
 | `/auth/logout` | POST | Log out and clear the authentication cookie | Implemented |
-| `/users/me/bookmarks/titles` | GET | List the user's bookmarked titles | Planned |
-| `/users/me/bookmarks/titles` | POST | Add a title to the user's bookmarks | Planned |
-| `/users/me/bookmarks/titles/{titleId}` | DELETE | Remove a title from the user's bookmarks | Planned |
-| `/users/me/bookmarks/people` | GET | List the user's bookmarked people | Planned |
-| `/users/me/bookmarks/people` | POST | Add a person to the user's bookmarks | Planned |
-| `/users/me/bookmarks/people/{personId}` | DELETE | Remove a person from the user's bookmarks | Planned |
+| `/users/me/bookmarks/media` | GET | List the user's bookmarked titles | Implemented |
+| `/users/me/bookmarks/media` | POST | Add a title to the user's bookmarks | Implemented |
+| `/users/me/bookmarks/media/{mediaId}` | DELETE | Remove a title from the user's bookmarks | Implemented |
+| `/users/me/bookmarks/people` | GET | List the user's bookmarked people | Implemented |
+| `/users/me/bookmarks/people` | POST | Add a person to the user's bookmarks | Implemented |
+| `/users/me/bookmarks/people/{personId}` | DELETE | Remove a person from the user's bookmarks | Implemented |
 | `/users/me/ratings` | GET | Retrieve the user's rating history | Planned |
 | `/users/me/ratings` | POST | Create a rating for a title | Planned |
 | `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Planned |
@@ -63,7 +63,11 @@ The following table describes the planned API. Endpoints are marked as implement
 
 ### Person Search Functionality
 
-`POST /person-searches` will provide person-search functionality, including relevant matching and ranking capabilities.
+`GET /people/search` supports searching for people by name using a query parameter.
+
+- Search requires authentication because searches are recorded in the user's search history.
+- Results support pagination.
+- The endpoint reuses the existing Subproject 1 `string_search_person` database function.
 
 ### Additional Functionality
 
@@ -170,8 +174,7 @@ Authentication uses JSON Web Tokens (JWT) signed with HS256.
 
 ## Pagination
 
-`GET /titles` supports pagination through query parameters:
-
+`GET /titles` and `GET /people` support pagination through the following query parameters:
 | Parameter | Default | Description |
 | --- | ---: | --- |
 | `page` | 1 | Requested page number |
