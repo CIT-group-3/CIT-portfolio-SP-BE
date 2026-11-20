@@ -9,29 +9,9 @@ import {
 } from "../data/people.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errors.js";
-import { parsePagination } from "./paging.js";
+import { createPagination, parsePagination } from "./paging.js";
 
 export const peopleRouter = Router();
-
-// Creates the same pagination information for people lists and searches.
-function createPagination(
-  page: number,
-  pageSize: number,
-  totalItems: number,
-  pageUri: (pageNumber: number) => string,
-) {
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const validPage = page <= totalPages;
-
-  return {
-    page,
-    pageSize,
-    totalItems,
-    totalPages,
-    previous: validPage && page > 1 ? pageUri(page - 1) : null,
-    next: validPage && page < totalPages ? pageUri(page + 1) : null,
-  };
-}
 
 // GET /people?page=1&pageSize=20
 peopleRouter.get("/", async (req, res, next) => {
@@ -149,14 +129,36 @@ peopleRouter.get("/coplayers", async (req, res, next) => {
       );
     }
 
-    const actors = await findCoPlayers(name.trim());
+    const pagination = parsePagination(
+      req.query.page,
+      req.query.pageSize,
+    );
+
+    if (!pagination) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid pagination parameters",
+      );
+    }
+
+    const { page, pageSize } = pagination;
+    const actorName = name.trim();
+    const result = await findCoPlayers(actorName, page, pageSize);
 
     return res.json({
-      items: actors.map((actor) => ({
+      items: result.rows.map((actor) => ({
         uri: `/people/${encodeURIComponent(actor.nconst)}`,
         name: actor.primaryname,
         frequency: actor.frequency,
       })),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) =>
+          `/people/coplayers?name=${encodeURIComponent(actorName)}&page=${number}&pageSize=${pageSize}`,
+      ),
     });
   } catch (error) {
     // The SP1 function uses PostgreSQL error P0001 for missing

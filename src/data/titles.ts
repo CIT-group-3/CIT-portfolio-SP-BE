@@ -247,12 +247,22 @@ export async function findPopularActors(
 // Reuses the existing SP1 database function.
 export async function findSimilarMovies(
   title: string,
-): Promise<SimilarMovie[]> {
-  const result = await pool.query<SimilarMovie>(
-    `SELECT media_id, title, similarity::float8 AS similarity
-     FROM find_similar_movies($1)`,
-    [title],
+  page: number,
+  pageSize: number,
+): Promise<{ rows: SimilarMovie[]; totalItems: number }> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<SimilarMovie & { total_items: string }>(
+    `SELECT media_id, title, similarity::float8 AS similarity,
+            COUNT(*) OVER()::text AS total_items
+     FROM find_similar_movies($1)
+     ORDER BY similarity DESC, media_id
+     LIMIT $2 OFFSET $3`,
+    [title, pageSize, offset],
   );
 
-  return result.rows;
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
 }

@@ -48,3 +48,23 @@ export interface PaginationParams {
   
     return { page, pageSize };
   }
+
+// Creates the pagination block shared by every paged list response.
+export function createPagination(
+  page: number,
+  pageSize: number,
+  totalItems: number,
+  pageUri: (pageNumber: number) => string,
+) {
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const validPage = page <= totalPages;
+
+  return {
+    page,
+    pageSize,
+    totalItems,
+    totalPages,
+    previous: validPage && page > 1 ? pageUri(page - 1) : null,
+    next: validPage && page < totalPages ? pageUri(page + 1) : null,
+  };
+}

@@ -81,9 +81,19 @@ describe("Bookmarks API", () => {
 
     expect(response.body.items).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ media_id: mediaId }),
+        expect.objectContaining({ uri: `/users/me/bookmarks/media/${mediaId}` }),
       ]),
     );
+    expect(response.body.pagination).toMatchObject({ page: 1, pageSize: 20 });
+  });
+
+  it("rejects invalid bookmark pagination parameters", async () => {
+    const response = await request(app)
+      .get("/users/me/bookmarks/media?page=0")
+      .set("Cookie", authCookie)
+      .expect(400);
+
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("rejects an invalid media ID", async () => {
@@ -119,7 +129,7 @@ describe("Bookmarks API", () => {
 
     expect(response.body.items).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ media_id: mediaId }),
+        expect.objectContaining({ uri: `/users/me/bookmarks/media/${mediaId}` }),
       ]),
     );
   });
@@ -138,7 +148,7 @@ describe("Bookmarks API", () => {
 
     expect(response.body.items).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ person_id: personId }),
+        expect.objectContaining({ uri: `/users/me/bookmarks/people/${personId}` }),
       ]),
     );
   });
@@ -166,7 +176,7 @@ describe("Bookmarks API", () => {
 
     expect(response.body.items).not.toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ person_id: personId }),
+        expect.objectContaining({ uri: `/users/me/bookmarks/people/${personId}` }),
       ]),
     );
   });
