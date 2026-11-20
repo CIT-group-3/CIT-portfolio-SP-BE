@@ -43,7 +43,7 @@ The following table describes the current API scope.
 | `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Implemented |
 | `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Implemented |
 | `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Implemented |
-| `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Planned |
+| `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Implemented |
 | `/title-searches` | POST | Search titles using supported search modes | Planned |
 | `/users/me/search-history` | GET | Retrieve the user's search history | Implemented |
 | `/users/me/search-history` | DELETE | Clear the user's search history | Implemented |
@@ -87,7 +87,7 @@ Authenticated users can manage their own title ratings and title/person bookmark
 
 ### Planned Functionality
 
-Remaining functionality includes person word-frequency analysis and additional account-management operations. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
+Remaining functionality includes the combined title-search endpoint. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
 
 ## Installation and setup
 
@@ -204,18 +204,17 @@ Paginated responses include the requested page, page size, total number of items
 | Code | Meaning | Used for |
 |---|---|---|
 | 200 OK | Request succeeded | Successful GET requests and operations returning a response |
-| 201 Created | A new resource was created | User registration and future resource creation |
-| 204 No Content | Succeeded without a response body | Planned deletion operations |
+| 201 Created | A new resource was created | User registration, bookmarks and ratings. Includes a `Location` header with the new resource's URI |
+| 204 No Content | Succeeded without a response body | Deleting bookmarks, ratings, search history and the user account; changing the password |
 | 400 Bad Request | Invalid request or input | Invalid pagination, parameters or request bodies |
 | 401 Unauthorized | Authentication required or invalid credentials | Protected endpoints and failed login |
-| 403 Forbidden | Authenticated user is not allowed | Accessing another user's protected resources |
-| 404 Not Found | Resource or endpoint not found | Unknown title, person or route |
-| 409 Conflict | Conflict with the current state | Duplicate username and future duplicate-resource checks |
+| 404 Not Found | Resource or endpoint not found | Unknown title, person, rating, search-history entry or route |
+| 409 Conflict | Conflict with the current state | Duplicate username, bookmark or rating |
 | 500 Internal Server Error | Unexpected server error | Unexpected failures such as database errors |
 
 ### Distinctions
 
-- **401 vs 403:** 401 means the user is not authenticated; 403 means the user is authenticated but not authorized.
+- **No 403:** every user-owned resource is addressed through `/users/me`, which always resolves to the authenticated user. A user therefore cannot address another user's data, so the API has no case where an authenticated request is refused with 403.
 - **400 vs 404:** 400 means the request is invalid; 404 means the requested resource does not exist.
 - **Login failure:** Returns the same generic 401 response for an unknown username or incorrect password, avoiding disclosure of registered usernames.
 
@@ -227,8 +226,8 @@ Errors use a consistent JSON structure:
 {
   "error": {
     "status": 404,
-    "code": "TITLE_NOT_FOUND",
-    "message": "Title was not found"
+    "code": "NOT_FOUND",
+    "message": "Title not found"
   }
 }
 ```
@@ -237,16 +236,13 @@ Errors use a consistent JSON structure:
 
 | Code | Status | Meaning |
 |---|---|---|
-| `VALIDATION_FAILED` | 400 | A parameter or body field is missing or invalid |
-| `NOT_AUTHENTICATED` | 401 | Missing, invalid or expired token, or wrong login credentials |
-| `FORBIDDEN` | 403 | The user may not access this resource |
-| `TITLE_NOT_FOUND` | 404 | No title with the given ID |
-| `PERSON_NOT_FOUND` | 404 | No person with the given ID |
-| `USERNAME_TAKEN` | 409 | The username is already registered |
-| `ALREADY_BOOKMARKED` | 409 | The item is already bookmarked by this user |
-| `INTERNAL_ERROR` | 500 | Unexpected server error |
+| `VALIDATION_ERROR` | 400 | A path parameter, query parameter or body field is missing or invalid |
+| `UNAUTHORIZED` | 401 | Missing, invalid or expired token, wrong login credentials, or wrong current password |
+| `NOT_FOUND` | 404 | The resource or route does not exist |
+| `CONFLICT` | 409 | The username is taken, or the bookmark or rating already exists |
+| `INTERNAL_SERVER_ERROR` | 500 | Unexpected server error. The response never contains stack traces or SQL details |
 
-Some error codes describe planned functionality and will be implemented alongside their corresponding endpoints.
+The `message` field says which resource or rule was involved, so codes are kept coarse-grained. Validation errors from request bodies may also include a `details` array listing each invalid field.
 
 ## Development commands
 

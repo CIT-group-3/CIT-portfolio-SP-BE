@@ -731,6 +731,58 @@ export const openApiSpec = {
         },
       },
     },
+    "/people/words": {
+      get: {
+        tags: ["People"],
+        summary: "Find the words most associated with a person",
+        description:
+          "Counts the inverted-index words of every title the person is credited on, using the existing SP1 person_words function. Results are ordered by frequency, highest first.",
+        parameters: [
+          {
+            name: "name",
+            in: "query",
+            required: true,
+            description: "Exact person name (1–100 characters)",
+            schema: { type: "string", example: "Tom Hanks" },
+          },
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/PageSize" },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated list of words",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          word: { type: "string", example: "war" },
+                          frequency: { type: "integer", example: 12 },
+                        },
+                      },
+                    },
+                    pagination: { $ref: "#/components/schemas/Pagination" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid name or pagination parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
     "/people/coplayers": {
         get: {
           tags: ["People"],

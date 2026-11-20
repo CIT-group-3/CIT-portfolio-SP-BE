@@ -6,6 +6,7 @@ import {
   findPersonKnownFor,
   searchPeople,
   findCoPlayers,
+  findPersonWords,
 } from "../data/people.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errors.js";
@@ -191,6 +192,59 @@ peopleRouter.get("/coplayers", async (req, res, next) => {
       }
     }
 
+    next(error);
+  }
+});
+
+// GET /people/words?name=Tom%20Hanks
+// Lists the words most associated with a person's titles, by frequency.
+peopleRouter.get("/words", async (req, res, next) => {
+  try {
+    const name = req.query.name;
+
+    if (
+      typeof name !== "string" ||
+      name.trim().length === 0 ||
+      name.trim().length > 100
+    ) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Person name must contain between 1 and 100 characters",
+      );
+    }
+
+    const pagination = parsePagination(
+      req.query.page,
+      req.query.pageSize,
+    );
+
+    if (!pagination) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid pagination parameters",
+      );
+    }
+
+    const { page, pageSize } = pagination;
+    const personName = name.trim();
+    const result = await findPersonWords(personName, page, pageSize);
+
+    return res.json({
+      items: result.rows.map((row) => ({
+        word: row.word,
+        frequency: row.frequency,
+      })),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) =>
+          `/people/words?name=${encodeURIComponent(personName)}&page=${number}&pageSize=${pageSize}`,
+      ),
+    });
+  } catch (error) {
     next(error);
   }
 });
