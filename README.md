@@ -44,7 +44,6 @@ The following table describes the current API scope.
 | `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Implemented |
 | `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Implemented |
 | `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Implemented |
-| `/title-searches` | POST | Search titles using supported search modes | Planned |
 | `/users/me/search-history` | GET | Retrieve the user's search history | Implemented |
 | `/users/me/search-history` | DELETE | Clear the user's search history | Implemented |
 | `/users/me/search-history/{searchId}` | GET | Retrieve one search-history entry | Implemented |
@@ -84,10 +83,6 @@ The ratings represent each person's overall IMDb rating, not a rating specific t
 ### Ratings and Bookmarks
 
 Authenticated users can manage their own title ratings and title/person bookmarks. Database operations use the authenticated user's ID, so users access their own framework data.
-
-### Planned Functionality
-
-Remaining functionality includes the combined title-search endpoint. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
 
 ## Installation and setup
 
@@ -135,6 +130,18 @@ CORS_ORIGIN=http://localhost:5173
 ```
 
 Replace the database placeholders with the credentials for your PostgreSQL database.
+
+#### Least-privilege database role
+
+`db/app-role.sql` creates a `cit_app` role that can only do what the API needs. It can read every table, write the framework tables (`users`, bookmarks, `search_log`, `user_rating`), upsert the application rating in `media_rating` through the rating trigger, and execute the SP1 functions. It cannot create, alter, drop or truncate anything.
+
+Run it once as a database administrator, then set `PGUSER=cit_app` and the chosen password in `.env`:
+
+```bash
+psql -v app_password='choose-a-password' -f db/app-role.sql
+```
+
+The course server account cannot create roles, so on that server the backend connects as the schema owner.
 
 Generate a secure JWT secret with:
 
@@ -270,7 +277,8 @@ src/
 ├── index.ts       # Application entry point
 └── validation.ts  # Request validation
 
-test/              # API integration tests
+db/                # SQL for the least-privilege database role
+test/              # API integration tests and data-access tests
 ```
 
 ## Related project
