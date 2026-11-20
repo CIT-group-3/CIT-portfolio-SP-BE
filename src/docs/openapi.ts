@@ -14,6 +14,7 @@ export const openApiSpec = {
     { name: "Authentication", description: "Login and logout operations" },
     { name: "Bookmarks", description: "Manage the authenticated user's media and person bookmarks" },
     { name: "Ratings", description: "Manage the authenticated user's media ratings" },
+    { name: "Search history", description: "Read and delete the authenticated user's search history" },
   ],
   components: {
     securitySchemes: {
@@ -259,6 +260,24 @@ export const openApiSpec = {
           items: {
             type: "array",
             items: { $ref: "#/components/schemas/UserRating" },
+          },
+          pagination: { $ref: "#/components/schemas/Pagination" },
+        },
+      },
+      SearchHistoryEntry: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/users/me/search-history/42" },
+          query: { type: "string", nullable: true, example: "love" },
+          searchedAt: { type: "string", nullable: true, example: "2026-11-20" },
+        },
+      },
+      SearchHistory: {
+        type: "object",
+        properties: {
+          items: {
+            type: "array",
+            items: { $ref: "#/components/schemas/SearchHistoryEntry" },
           },
           pagination: { $ref: "#/components/schemas/Pagination" },
         },
@@ -1229,6 +1248,85 @@ export const openApiSpec = {
           "400": { description: "Invalid media ID" },
           "401": { description: "Authentication required or invalid token" },
           "404": { description: "Rating not found" },
+        },
+      },
+    },
+    "/users/me/search-history": {
+      get: {
+        tags: ["Search history"],
+        summary: "List the authenticated user's searches, newest first",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/PageSize" },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated search history",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SearchHistory" },
+              },
+            },
+          },
+          "400": { description: "Invalid pagination parameters" },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+      delete: {
+        tags: ["Search history"],
+        summary: "Clear the authenticated user's search history",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "204": { description: "Search history cleared" },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+    },
+    "/users/me/search-history/{searchId}": {
+      get: {
+        tags: ["Search history"],
+        summary: "Get one search-history entry",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "searchId",
+            in: "path",
+            required: true,
+            schema: { type: "integer", example: 42 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Search-history entry",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/SearchHistoryEntry" },
+              },
+            },
+          },
+          "400": { description: "Invalid search ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Search-history entry not found" },
+        },
+      },
+      delete: {
+        tags: ["Search history"],
+        summary: "Delete one search-history entry",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "searchId",
+            in: "path",
+            required: true,
+            schema: { type: "integer", example: 42 },
+          },
+        ],
+        responses: {
+          "204": { description: "Search-history entry deleted" },
+          "400": { description: "Invalid search ID" },
+          "401": { description: "Authentication required or invalid token" },
+          "404": { description: "Search-history entry not found" },
         },
       },
     },

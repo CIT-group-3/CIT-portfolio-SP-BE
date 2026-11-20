@@ -10,6 +10,7 @@ import { peopleRouter } from "./routes/people.js";
 import { bookmarksRouter } from "./routes/bookmarks.js";
 import { authRouter } from "./routes/auth.js";
 import { ratingsRouter } from "./routes/ratings.js";
+import { searchHistoryRouter } from "./routes/searchHistory.js";
 import {
   errorHandler,
   notFoundHandler,
@@ -46,6 +47,7 @@ app.use("/auth", authRouter);
 app.use("/titles", titlesRouter);
 app.use("/people", peopleRouter);
 app.use("/users/me/ratings", ratingsRouter);
+app.use("/users/me/search-history", searchHistoryRouter);
 
 // Keep these AFTER all registered routes.
 app.use(notFoundHandler);

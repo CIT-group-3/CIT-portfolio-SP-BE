@@ -42,7 +42,10 @@ The following table describes the current API scope.
 | `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Implemented |
 | `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Planned |
 | `/title-searches` | POST | Search titles using supported search modes | Planned |
-| `/users/me/search-history` | GET | Retrieve the user's search history | Planned |
+| `/users/me/search-history` | GET | Retrieve the user's search history | Implemented |
+| `/users/me/search-history` | DELETE | Clear the user's search history | Implemented |
+| `/users/me/search-history/{searchId}` | GET | Retrieve one search-history entry | Implemented |
+| `/users/me/search-history/{searchId}` | DELETE | Delete one search-history entry | Implemented |
 
 ### Similar Movies
 
@@ -81,7 +84,7 @@ Authenticated users can manage their own title ratings and title/person bookmark
 
 ### Planned Functionality
 
-Remaining functionality includes person word-frequency analysis, search-history retrieval and additional account-management operations. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
+Remaining functionality includes person word-frequency analysis and additional account-management operations. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
 
 ## Installation and setup
 
