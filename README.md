@@ -17,6 +17,9 @@ The following table describes the current API scope.
 | `/` | GET | API welcome message and documentation location | Implemented |
 | `/titles` | GET | Paged list of titles | Implemented |
 | `/titles/{id}` | GET | Retrieve one title | Implemented |
+| `/titles/search?q={query}` | GET | Search titles by title or plot and record the search in user history | Implemented |
+| `/titles/structured-search` | GET | Search titles using title, plot, character and person-name filters | Implemented |
+| `/titles/popular-actors?title={title}` | GET | Find actors and actresses credited in an exact title match, ranked by overall IMDb person rating | Implemented |
 | `/titles/similar?title={title}` | GET | Find movies similar to a specified movie | Implemented |
 | `/people` | GET | Paged list of people | Implemented |
 | `/people/search?q={query}` | GET | Search people by name and record the search in user history | Implemented |
@@ -57,13 +60,28 @@ The following table describes the current API scope.
 - Results support pagination.
 - The endpoint reuses the existing Subproject 1 `string_search_person` database function.
 
+### Title Search
+
+The API provides two authenticated title-search endpoints:
+
+- `GET /titles/search` searches titles and plots using a text query.
+- `GET /titles/structured-search` supports optional title, plot, character and person-name filters. At least one filter is required.
+
+Both endpoints reuse existing Subproject 1 database functions and record searches in the authenticated user's search history. Results support pagination.
+
+### Popular Actors
+
+`GET /titles/popular-actors` returns actors and actresses credited in an exact title match, ordered by their overall IMDb person rating. It reuses the Subproject 1 `media_popular_actors` database function. Results support pagination.
+
+The ratings represent each person's overall IMDb rating, not a rating specific to the selected title.
+
 ### Ratings and Bookmarks
 
 Authenticated users can manage their own title ratings and title/person bookmarks. Database operations use the authenticated user's ID, so users access their own framework data.
 
 ### Planned Functionality
 
-Remaining functionality includes word-frequency analysis, additional title-search modes and search-history management. The API will be extended as implementation progresses.
+Remaining functionality includes person word-frequency analysis, search-history retrieval and additional account-management operations. The planned endpoints are retained in the API table to show functionality that remains outside the current implementation.
 
 ## Installation and setup
 
@@ -158,6 +176,9 @@ Authentication uses JSON Web Tokens (JWT) signed with HS256.
 The following endpoints support pagination:
 
 - `GET /titles`
+- `GET /titles/search`
+- `GET /titles/structured-search`
+- `GET /titles/popular-actors`
 - `GET /people`
 - `GET /people/search`
 
@@ -175,7 +196,7 @@ Paginated responses include the requested page, page size, total number of items
 ### Status codes
 
 | Code | Meaning | Used for |
-| --- | --- | --- |
+|---|---|---|
 | 200 OK | Request succeeded | Successful GET requests and operations returning a response |
 | 201 Created | A new resource was created | User registration and future resource creation |
 | 204 No Content | Succeeded without a response body | Planned deletion operations |
@@ -209,7 +230,7 @@ Errors use a consistent JSON structure:
 ### Error codes
 
 | Code | Status | Meaning |
-| --- | --- | --- |
+|---|---|---|
 | `VALIDATION_FAILED` | 400 | A parameter or body field is missing or invalid |
 | `NOT_AUTHENTICATED` | 401 | Missing, invalid or expired token, or wrong login credentials |
 | `FORBIDDEN` | 403 | The user may not access this resource |
@@ -224,7 +245,7 @@ Some error codes describe planned functionality and will be implemented alongsid
 ## Development commands
 
 | Command | Description |
-| --- | --- |
+|---|---|
 | `npm run dev` | Start the development server with automatic restart |
 | `npm run build` | Compile TypeScript into `dist/` |
 | `npm start` | Run the compiled application |
