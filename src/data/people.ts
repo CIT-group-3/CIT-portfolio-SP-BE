@@ -161,3 +161,32 @@ export async function findCoPlayers(
     totalItems: Number(result.rows[0]?.total_items ?? 0),
   };
 }
+export interface PersonWord {
+  word: string;
+  frequency: number;
+}
+
+// Find the words most associated with a person's titles.
+// Reuses the existing SP1 function; LIMIT NULL asks it for every word
+// so the result can be paged here with a deterministic order.
+export async function findPersonWords(
+  personName: string,
+  page: number,
+  pageSize: number,
+): Promise<{ rows: PersonWord[]; totalItems: number }> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<PersonWord & { total_items: string }>(
+    `SELECT word, frequency,
+            COUNT(*) OVER()::text AS total_items
+     FROM person_words($1, NULL)
+     ORDER BY frequency DESC, word
+     LIMIT $2 OFFSET $3`,
+    [personName, pageSize, offset],
+  );
+
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
+}

@@ -43,7 +43,7 @@ The following table describes the current API scope.
 | `/users/me/ratings/{titleId}` | GET | Retrieve the user's rating for a specific title | Implemented |
 | `/users/me/ratings/{titleId}` | PUT | Update the user's rating for a title | Implemented |
 | `/users/me/ratings/{titleId}` | DELETE | Delete the user's rating for a title | Implemented |
-| `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Planned |
+| `/people/words?name={name}` | GET | Retrieve word-frequency information associated with a person's work | Implemented |
 | `/title-searches` | POST | Search titles using supported search modes | Planned |
 | `/users/me/search-history` | GET | Retrieve the user's search history | Implemented |
 | `/users/me/search-history` | DELETE | Clear the user's search history | Implemented |

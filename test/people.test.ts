@@ -153,3 +153,50 @@ describe("GET /people/search", () => {
     expect(response.body.error.code).toBe("VALIDATION_ERROR");
   });
 });
+
+describe("GET /people/words", () => {
+  let crewName: string;
+
+  beforeAll(async () => {
+    // Use a person who is credited on at least one title.
+    const result = await pool.query<{ name: string }>(
+      `SELECT p.name
+       FROM person p
+       JOIN crew c ON c.person_id = p.id
+       LIMIT 1`,
+    );
+
+    if (!result.rows[0]) {
+      throw new Error("The crew table contains no test data");
+    }
+
+    crewName = result.rows[0].name;
+  });
+
+  it("returns a paginated list of words by frequency", async () => {
+    const response = await request(app)
+      .get("/people/words")
+      .query({ name: crewName, pageSize: 5 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.items.length).toBeGreaterThan(0);
+    expect(response.body.items.length).toBeLessThanOrEqual(5);
+    expect(response.body.items[0]).toMatchObject({
+      word: expect.any(String),
+      frequency: expect.any(Number),
+    });
+    expect(response.body.pagination).toMatchObject({ page: 1, pageSize: 5 });
+
+    const frequencies = response.body.items.map(
+      (item: { frequency: number }) => item.frequency,
+    );
+    expect(frequencies).toEqual([...frequencies].sort((a, b) => b - a));
+  });
+
+  it("rejects a missing name", async () => {
+    const response = await request(app).get("/people/words");
+
+    expect(response.status).toBe(400);
+    expect(response.body.error.code).toBe("VALIDATION_ERROR");
+  });
+});
