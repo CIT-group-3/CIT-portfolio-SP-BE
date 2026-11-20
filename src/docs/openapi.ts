@@ -24,6 +24,23 @@ export const openApiSpec = {
         description: "HTTP-only JWT authentication cookie",
       },
     },
+    parameters: {
+      Page: {
+        name: "page",
+        in: "query",
+        description: "Page number (positive integer)",
+        required: false,
+        schema: { type: "integer", minimum: 1, default: 1 },
+      },
+      PageSize: {
+        name: "pageSize",
+        in: "query",
+        description:
+          "Number of items per page (positive integer). Values above 100 are capped at 100.",
+        required: false,
+        schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+      },
+    },
     schemas: {
       Credentials: {
         type: "object",
@@ -56,7 +73,7 @@ export const openApiSpec = {
       SimilarMovie: {
         type: "object",
         properties: {
-          media_id: { type: "string", example: "tt0111161" },
+          uri: { type: "string", example: "/titles/tt0111161" },
           title: { type: "string", example: "The Shawshank Redemption" },
           similarity: {
             type: "number",
@@ -169,21 +186,41 @@ export const openApiSpec = {
           },
         },
       },
+      TitleReference: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/titles/tt0111161" },
+          name: { type: "string", example: "The Shawshank Redemption" },
+          type: { type: "string", example: "movie" },
+        },
+      },
+      PersonReference: {
+        type: "object",
+        properties: {
+          uri: { type: "string", example: "/people/nm0000209" },
+          name: { type: "string", example: "Tim Robbins" },
+        },
+      },
       MediaBookmark: {
         type: "object",
         properties: {
-          media_id: { type: "string", example: "tt0111161" },
-          title: { type: "string", example: "The Shawshank Redemption" },
-          media_type: { type: "string", example: "movie" },
-          timestamp: { type: "string", example: "2026-11-18" },
+          uri: {
+            type: "string",
+            example: "/users/me/bookmarks/media/tt0111161",
+          },
+          title: { $ref: "#/components/schemas/TitleReference" },
+          bookmarkedAt: { type: "string", example: "2026-11-18" },
         },
       },
       PersonBookmark: {
         type: "object",
         properties: {
-          person_id: { type: "string", example: "nm0000209" },
-          name: { type: "string", example: "Tim Robbins" },
-          timestamp: { type: "string", example: "2026-11-18" },
+          uri: {
+            type: "string",
+            example: "/users/me/bookmarks/people/nm0000209",
+          },
+          person: { $ref: "#/components/schemas/PersonReference" },
+          bookmarkedAt: { type: "string", example: "2026-11-18" },
         },
       },
       MediaBookmarks: {
@@ -193,6 +230,7 @@ export const openApiSpec = {
             type: "array",
             items: { $ref: "#/components/schemas/MediaBookmark" },
           },
+          pagination: { $ref: "#/components/schemas/Pagination" },
         },
       },
       PersonBookmarks: {
@@ -202,17 +240,17 @@ export const openApiSpec = {
             type: "array",
             items: { $ref: "#/components/schemas/PersonBookmark" },
           },
+          pagination: { $ref: "#/components/schemas/Pagination" },
         },
       },
       UserRating: {
         type: "object",
         properties: {
-          media_id: { type: "string", example: "tt0111161" },
-          title: { type: "string", example: "The Shawshank Redemption" },
-          media_type: { type: "string", example: "movie" },
+          uri: { type: "string", example: "/users/me/ratings/tt0111161" },
+          title: { $ref: "#/components/schemas/TitleReference" },
           rating: { type: "integer", minimum: 1, maximum: 10, example: 9 },
           review: { type: "string", nullable: true, example: null },
-          timestamp: { type: "string", example: "2026-11-19" },
+          ratedAt: { type: "string", example: "2026-11-19" },
         },
       },
       UserRatings: {
@@ -222,6 +260,7 @@ export const openApiSpec = {
             type: "array",
             items: { $ref: "#/components/schemas/UserRating" },
           },
+          pagination: { $ref: "#/components/schemas/Pagination" },
         },
       },
       Error: {
@@ -524,6 +563,8 @@ export const openApiSpec = {
               description: "Exact movie title",
               schema: { type: "string", example: "Let It Ride" },
             },
+            { $ref: "#/components/parameters/Page" },
+            { $ref: "#/components/parameters/PageSize" },
           ],
           responses: {
             "200": {
@@ -537,13 +578,14 @@ export const openApiSpec = {
                         type: "array",
                         items: { $ref: "#/components/schemas/SimilarMovie" },
                       },
+                      pagination: { $ref: "#/components/schemas/Pagination" },
                     },
                   },
                 },
               },
             },
             "400": {
-              description: "Movie title is required",
+              description: "Movie title is required or invalid pagination parameters",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/Error" },
@@ -684,6 +726,8 @@ export const openApiSpec = {
               description: "Exact actor name (1–100 characters)",
               schema: { type: "string", example: "Tom Hanks" },
             },
+            { $ref: "#/components/parameters/Page" },
+            { $ref: "#/components/parameters/PageSize" },
           ],
           responses: {
             "200": {
@@ -697,13 +741,14 @@ export const openApiSpec = {
                         type: "array",
                         items: { $ref: "#/components/schemas/CoPlayer" },
                       },
+                      pagination: { $ref: "#/components/schemas/Pagination" },
                     },
                   },
                 },
               },
             },
             "400": {
-              description: "Invalid or ambiguous actor name",
+              description: "Invalid or ambiguous actor name, or invalid pagination parameters",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/Error" },
@@ -798,6 +843,10 @@ export const openApiSpec = {
         tags: ["Bookmarks"],
         summary: "List the authenticated user's media bookmarks",
         security: [{ cookieAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/PageSize" },
+        ],
         responses: {
           "200": {
             description: "List of bookmarked media",
@@ -807,6 +856,7 @@ export const openApiSpec = {
               },
             },
           },
+          "400": { description: "Invalid pagination parameters" },
           "401": { description: "Authentication required or invalid token" },
         },
       },
@@ -829,7 +879,31 @@ export const openApiSpec = {
           },
         },
         responses: {
-          "201": { description: "Media bookmark created" },
+          "201": {
+            description: "Media bookmark created",
+            headers: {
+              Location: {
+                description: "URI of the created resource",
+                schema: { type: "string" },
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    uri: { type: "string", example: "/users/me/bookmarks/media/tt0111161" },
+                    title: {
+                      type: "object",
+                      properties: {
+                        uri: { type: "string", example: "/titles/tt0111161" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
           "400": { description: "Invalid media ID" },
           "401": { description: "Authentication required or invalid token" },
           "404": { description: "Media not found" },
@@ -862,6 +936,10 @@ export const openApiSpec = {
         tags: ["Bookmarks"],
         summary: "List the authenticated user's person bookmarks",
         security: [{ cookieAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/PageSize" },
+        ],
         responses: {
           "200": {
             description: "List of bookmarked people",
@@ -871,6 +949,7 @@ export const openApiSpec = {
               },
             },
           },
+          "400": { description: "Invalid pagination parameters" },
           "401": { description: "Authentication required or invalid token" },
         },
       },
@@ -893,7 +972,31 @@ export const openApiSpec = {
           },
         },
         responses: {
-          "201": { description: "Person bookmark created" },
+          "201": {
+            description: "Person bookmark created",
+            headers: {
+              Location: {
+                description: "URI of the created resource",
+                schema: { type: "string" },
+              },
+            },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    uri: { type: "string", example: "/users/me/bookmarks/people/nm0000209" },
+                    person: {
+                      type: "object",
+                      properties: {
+                        uri: { type: "string", example: "/people/nm0000209" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
           "400": { description: "Invalid person ID" },
           "401": { description: "Authentication required or invalid token" },
           "404": { description: "Person not found" },
@@ -971,6 +1074,10 @@ export const openApiSpec = {
         tags: ["Ratings"],
         summary: "List the authenticated user's ratings",
         security: [{ cookieAuth: [] }],
+        parameters: [
+          { $ref: "#/components/parameters/Page" },
+          { $ref: "#/components/parameters/PageSize" },
+        ],
         responses: {
           "200": {
             description: "List of ratings",
@@ -980,6 +1087,7 @@ export const openApiSpec = {
               },
             },
           },
+          "400": { description: "Invalid pagination parameters" },
           "401": { description: "Authentication required or invalid token" },
         },
       },
@@ -1005,12 +1113,24 @@ export const openApiSpec = {
         responses: {
           "201": {
             description: "Rating successfully created",
+            headers: {
+              Location: {
+                description: "URI of the created resource",
+                schema: { type: "string" },
+              },
+            },
             content: {
               "application/json": {
                 schema: {
                   type: "object",
                   properties: {
-                    mediaId: { type: "string", example: "tt0111161" },
+                    uri: { type: "string", example: "/users/me/ratings/tt0111161" },
+                    title: {
+                      type: "object",
+                      properties: {
+                        uri: { type: "string", example: "/titles/tt0111161" },
+                      },
+                    },
                     rating: { type: "integer", example: 9 },
                     averageRating: { type: "number", nullable: true, example: 9 },
                   },

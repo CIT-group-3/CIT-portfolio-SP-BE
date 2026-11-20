@@ -142,12 +142,22 @@ export async function searchPeople(
 // Reuses the existing SP1 database function.
 export async function findCoPlayers(
   actorName: string,
-): Promise<CoPlayer[]> {
-  const result = await pool.query<CoPlayer>(
-    `SELECT nconst, primaryname, frequency::int AS frequency
-     FROM find_coplayers($1)`,
-    [actorName],
+  page: number,
+  pageSize: number,
+): Promise<{ rows: CoPlayer[]; totalItems: number }> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<CoPlayer & { total_items: string }>(
+    `SELECT nconst, primaryname, frequency::int AS frequency,
+            COUNT(*) OVER()::text AS total_items
+     FROM find_coplayers($1)
+     ORDER BY frequency DESC, nconst
+     LIMIT $2 OFFSET $3`,
+    [actorName, pageSize, offset],
   );
 
-  return result.rows;
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
 }

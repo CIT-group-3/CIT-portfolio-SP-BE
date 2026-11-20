@@ -14,29 +14,9 @@ import {
   toTitleDto,
   toTitlesListDto,
 } from "./dto.js";
-import { parsePagination } from "./paging.js";
+import { createPagination, parsePagination } from "./paging.js";
 
 export const titlesRouter = Router();
-
-// Creates pagination information for title search results.
-function createPagination(
-  page: number,
-  pageSize: number,
-  totalItems: number,
-  pageUri: (pageNumber: number) => string,
-) {
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const validPage = page <= totalPages;
-
-  return {
-    page,
-    pageSize,
-    totalItems,
-    totalPages,
-    previous: validPage && page > 1 ? pageUri(page - 1) : null,
-    next: validPage && page < totalPages ? pageUri(page + 1) : null,
-  };
-}
 
 // GET /titles?page=1&pageSize=20
 titlesRouter.get("/", async (req, res, next) => {
@@ -318,9 +298,37 @@ titlesRouter.get("/similar", async (req, res, next) => {
       );
     }
 
-    const movies = await findSimilarMovies(title.trim());
+    const pagination = parsePagination(
+      req.query.page,
+      req.query.pageSize,
+    );
 
-    return res.json({ items: movies });
+    if (!pagination) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid pagination parameters",
+      );
+    }
+
+    const { page, pageSize } = pagination;
+    const movieTitle = title.trim();
+    const result = await findSimilarMovies(movieTitle, page, pageSize);
+
+    return res.json({
+      items: result.rows.map((movie) => ({
+        uri: `/titles/${encodeURIComponent(movie.media_id)}`,
+        title: movie.title,
+        similarity: movie.similarity,
+      })),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) =>
+          `/titles/similar?title=${encodeURIComponent(movieTitle)}&page=${number}&pageSize=${pageSize}`,
+      ),
+    });
   } catch (error) {
     if (
       typeof error === "object" &&

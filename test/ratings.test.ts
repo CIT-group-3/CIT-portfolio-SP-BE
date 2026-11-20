@@ -79,7 +79,8 @@ describe("Ratings API", () => {
       .send({ mediaId, rating: 8 })
       .expect(201);
 
-    expect(created.body.mediaId).toBe(mediaId);
+    expect(created.body.uri).toBe(`/users/me/ratings/${mediaId}`);
+    expect(created.headers.location).toBe(`/users/me/ratings/${mediaId}`);
     expect(created.body.rating).toBe(8);
 
     const response = await request(app)
@@ -90,11 +91,12 @@ describe("Ratings API", () => {
     expect(response.body.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          media_id: mediaId,
+          uri: `/users/me/ratings/${mediaId}`,
           rating: 8,
         }),
       ]),
     );
+    expect(response.body.pagination).toMatchObject({ page: 1, pageSize: 20 });
   });
 
   it("rejects a duplicate rating", async () => {
@@ -113,7 +115,7 @@ describe("Ratings API", () => {
       .set("Cookie", authCookie)
       .expect(200);
 
-    expect(response.body.media_id).toBe(mediaId);
+    expect(response.body.title.uri).toBe(`/titles/${mediaId}`);
     expect(response.body.rating).toBe(8);
   });
 
@@ -124,7 +126,7 @@ describe("Ratings API", () => {
       .send({ rating: 10 })
       .expect(200);
 
-    expect(response.body.media_id).toBe(mediaId);
+    expect(response.body.title.uri).toBe(`/titles/${mediaId}`);
     expect(response.body.rating).toBe(10);
   });
 

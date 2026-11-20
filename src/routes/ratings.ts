@@ -6,9 +6,11 @@ import {
   findUserRatings,
   removeUserRating,
   updateUserRating,
+  type UserRating,
 } from "../data/ratings.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errors.js";
+import { createPagination, parsePagination } from "./paging.js";
 
 export const ratingsRouter = Router();
 
@@ -58,12 +60,51 @@ function handleDbError(error: unknown): never {
   throw error;
 }
 
-// GET /users/me/ratings
-// Return all ratings belonging to the logged-in user.
+function ratingUri(mediaId: string): string {
+  return `/users/me/ratings/${encodeURIComponent(mediaId)}`;
+}
+
+// Maps a rating row to its JSON representation.
+function toRatingDto(row: UserRating) {
+  return {
+    uri: ratingUri(row.media_id),
+    title: {
+      uri: `/titles/${encodeURIComponent(row.media_id)}`,
+      name: row.title,
+      type: row.media_type,
+    },
+    rating: row.rating,
+    review: row.review,
+    ratedAt: row.timestamp,
+  };
+}
+
+// GET /users/me/ratings?page=1&pageSize=20
+// Return the logged-in user's ratings, newest first.
 ratingsRouter.get("/", async (req, res, next) => {
   try {
-    const ratings = await findUserRatings(req.user!.userId);
-    return res.status(200).json({ items: ratings });
+    const pagination = parsePagination(req.query.page, req.query.pageSize);
+
+    if (!pagination) {
+      throw new ApiError(
+        400,
+        "VALIDATION_ERROR",
+        "Invalid pagination parameters",
+      );
+    }
+
+    const { page, pageSize } = pagination;
+    const result = await findUserRatings(req.user!.userId, page, pageSize);
+
+    return res.status(200).json({
+      items: result.rows.map(toRatingDto),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) => `/users/me/ratings?page=${number}&pageSize=${pageSize}`,
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -82,8 +123,11 @@ ratingsRouter.post("/", async (req, res, next) => {
       rating,
     );
 
-    return res.status(201).json({
-      mediaId,
+    const uri = ratingUri(mediaId);
+
+    return res.status(201).location(uri).json({
+      uri,
+      title: { uri: `/titles/${encodeURIComponent(mediaId)}` },
       rating,
       averageRating,
     });
@@ -107,7 +151,7 @@ ratingsRouter.get("/:titleId", async (req, res, next) => {
       throw new ApiError(404, "NOT_FOUND", "Rating not found");
     }
 
-    return res.status(200).json(rating);
+    return res.status(200).json(toRatingDto(rating));
   } catch (error) {
     next(error);
   }
@@ -132,7 +176,11 @@ ratingsRouter.put("/:titleId", async (req, res, next) => {
 
     const updatedRating = await findUserRating(req.user!.userId, mediaId);
 
-    return res.status(200).json(updatedRating);
+    if (!updatedRating) {
+      throw new ApiError(404, "NOT_FOUND", "Rating not found");
+    }
+
+    return res.status(200).json(toRatingDto(updatedRating));
   } catch (error) {
     next(error);
   }

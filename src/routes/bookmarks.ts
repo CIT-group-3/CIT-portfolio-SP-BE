@@ -9,6 +9,7 @@ import {
 } from "../data/bookmarks.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../middleware/errors.js";
+import { createPagination, parsePagination } from "./paging.js";
 
 export const bookmarksRouter = Router();
 
@@ -43,12 +44,52 @@ function handleDbError(error: unknown): never {
   throw error;
 }
 
-// GET /users/me/bookmarks/media
+// Read page and pageSize from the query string, or reject them.
+function requirePagination(page: unknown, pageSize: unknown) {
+  const pagination = parsePagination(page, pageSize);
+
+  if (!pagination) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Invalid pagination parameters");
+  }
+
+  return pagination;
+}
+
+function titleBookmarkUri(mediaId: string): string {
+  return `/users/me/bookmarks/media/${encodeURIComponent(mediaId)}`;
+}
+
+function personBookmarkUri(personId: string): string {
+  return `/users/me/bookmarks/people/${encodeURIComponent(personId)}`;
+}
+
+// GET /users/me/bookmarks/media?page=1&pageSize=20
 // Return the logged-in user's bookmarked movies and TV shows.
 bookmarksRouter.get("/media", async (req, res, next) => {
   try {
-    const bookmarks = await findTitleBookmarks(req.user!.userId);
-    return res.status(200).json({ items: bookmarks });
+    const { page, pageSize } = requirePagination(
+      req.query.page,
+      req.query.pageSize,
+    );
+    const result = await findTitleBookmarks(req.user!.userId, page, pageSize);
+
+    return res.status(200).json({
+      items: result.rows.map((bookmark) => ({
+        uri: titleBookmarkUri(bookmark.media_id),
+        title: {
+          uri: `/titles/${encodeURIComponent(bookmark.media_id)}`,
+          name: bookmark.title,
+          type: bookmark.media_type,
+        },
+        bookmarkedAt: bookmark.timestamp,
+      })),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) => `/users/me/bookmarks/media?page=${number}&pageSize=${pageSize}`,
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -66,7 +107,12 @@ bookmarksRouter.post("/media", async (req, res, next) => {
       handleDbError(error);
     }
 
-    return res.status(201).json({ mediaId });
+    const uri = titleBookmarkUri(mediaId);
+
+    return res
+      .status(201)
+      .location(uri)
+      .json({ uri, title: { uri: `/titles/${encodeURIComponent(mediaId)}` } });
   } catch (error) {
     next(error);
   }
@@ -85,12 +131,32 @@ bookmarksRouter.delete("/media/:mediaId", async (req, res, next) => {
   }
 });
 
-// GET /users/me/bookmarks/people
+// GET /users/me/bookmarks/people?page=1&pageSize=20
 // Return the logged-in user's bookmarked people.
 bookmarksRouter.get("/people", async (req, res, next) => {
   try {
-    const bookmarks = await findPersonBookmarks(req.user!.userId);
-    return res.status(200).json({ items: bookmarks });
+    const { page, pageSize } = requirePagination(
+      req.query.page,
+      req.query.pageSize,
+    );
+    const result = await findPersonBookmarks(req.user!.userId, page, pageSize);
+
+    return res.status(200).json({
+      items: result.rows.map((bookmark) => ({
+        uri: personBookmarkUri(bookmark.person_id),
+        person: {
+          uri: `/people/${encodeURIComponent(bookmark.person_id)}`,
+          name: bookmark.name,
+        },
+        bookmarkedAt: bookmark.timestamp,
+      })),
+      pagination: createPagination(
+        page,
+        pageSize,
+        result.totalItems,
+        (number) => `/users/me/bookmarks/people?page=${number}&pageSize=${pageSize}`,
+      ),
+    });
   } catch (error) {
     next(error);
   }
@@ -108,7 +174,12 @@ bookmarksRouter.post("/people", async (req, res, next) => {
       handleDbError(error);
     }
 
-    return res.status(201).json({ personId });
+    const uri = personBookmarkUri(personId);
+
+    return res
+      .status(201)
+      .location(uri)
+      .json({ uri, person: { uri: `/people/${encodeURIComponent(personId)}` } });
   } catch (error) {
     next(error);
   }

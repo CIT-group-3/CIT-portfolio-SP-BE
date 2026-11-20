@@ -14,21 +14,30 @@ export interface UserRating {
 // Reuses the existing SP1 database function.
 export async function findUserRatings(
   userId: number,
-): Promise<UserRating[]> {
-  const result = await pool.query<UserRating>(
+  page: number,
+  pageSize: number,
+): Promise<{ rows: UserRating[]; totalItems: number }> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<UserRating & { total_items: string }>(
     `SELECT r.media_id,
             m.title,
             m.media_type,
             r.rating,
             r.review,
-            r."timestamp"::text AS timestamp
+            r."timestamp"::text AS timestamp,
+            COUNT(*) OVER()::text AS total_items
      FROM get_user_ratings($1) r
      JOIN media m ON m.id = r.media_id
-     ORDER BY r."timestamp" DESC, r.media_id`,
-    [userId],
+     ORDER BY r."timestamp" DESC, r.media_id
+     LIMIT $2 OFFSET $3`,
+    [userId, pageSize, offset],
   );
 
-  return result.rows;
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
 }
 
 // Find one rating belonging to the user for a specific title.

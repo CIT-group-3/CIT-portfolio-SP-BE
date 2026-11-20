@@ -13,20 +13,35 @@ export interface PersonBookmarkRow {
   timestamp: string;
 }
 
+export interface PaginatedBookmarks<Row> {
+  rows: Row[];
+  totalItems: number;
+}
+
 export async function findTitleBookmarks(
   userId: number,
-): Promise<TitleBookmarkRow[]> {
-  const result = await pool.query<TitleBookmarkRow>(
+  page: number,
+  pageSize: number,
+): Promise<PaginatedBookmarks<TitleBookmarkRow>> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<TitleBookmarkRow & { total_items: string }>(
     `SELECT b.media_id,
             m.title,
             m.media_type,
-            b.timestamp::text AS timestamp
+            b.timestamp::text AS timestamp,
+            COUNT(*) OVER()::text AS total_items
      FROM get_user_bookmarked_media($1) b
      JOIN media m ON m.id = b.media_id
-     ORDER BY b.timestamp DESC, b.media_id`,
-    [userId],
+     ORDER BY b.timestamp DESC, b.media_id
+     LIMIT $2 OFFSET $3`,
+    [userId, pageSize, offset],
   );
-  return result.rows;
+
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
 }
 
 export async function addTitleBookmark(
@@ -51,17 +66,27 @@ export async function removeTitleBookmark(
 
 export async function findPersonBookmarks(
   userId: number,
-): Promise<PersonBookmarkRow[]> {
-  const result = await pool.query<PersonBookmarkRow>(
+  page: number,
+  pageSize: number,
+): Promise<PaginatedBookmarks<PersonBookmarkRow>> {
+  const offset = (page - 1) * pageSize;
+
+  const result = await pool.query<PersonBookmarkRow & { total_items: string }>(
     `SELECT b.person_id,
             p.name,
-            b.timestamp::text AS timestamp
+            b.timestamp::text AS timestamp,
+            COUNT(*) OVER()::text AS total_items
      FROM get_user_bookmarked_person($1) b
      JOIN person p ON p.id = b.person_id
-     ORDER BY b.timestamp DESC, b.person_id`,
-    [userId],
+     ORDER BY b.timestamp DESC, b.person_id
+     LIMIT $2 OFFSET $3`,
+    [userId, pageSize, offset],
   );
-  return result.rows;
+
+  return {
+    rows: result.rows,
+    totalItems: Number(result.rows[0]?.total_items ?? 0),
+  };
 }
 
 export async function addPersonBookmark(
