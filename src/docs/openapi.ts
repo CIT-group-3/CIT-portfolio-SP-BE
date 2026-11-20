@@ -282,7 +282,234 @@ export const openApiSpec = {
         },
       },
     },
-
+        "/titles/search": {
+      get: {
+        tags: ["Titles"],
+        summary: "Search media titles",
+        description:
+          "Searches media titles and plots using the SP1 string_search function. The search is recorded in the authenticated user's search history.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            required: true,
+            description: "Text to search for in titles and plots",
+            schema: { type: "string", minLength: 1, maxLength: 100, example: "matrix" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "pageSize",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated search results",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          uri: { type: "string", example: "/titles/tt0133093" },
+                          title: { type: "string", example: "The Matrix" },
+                        },
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid search or pagination parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "401": {
+            description: "Authentication required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+        "/titles/structured-search": {
+      get: {
+        tags: ["Titles"],
+        summary: "Search titles using multiple filters",
+        description:
+          "Searches titles using optional title, plot, character and person-name filters. At least one filter is required. Results are recorded in the authenticated user's search history.",
+        security: [{ cookieAuth: [] }],
+        parameters: [
+          {
+            name: "title",
+            in: "query",
+            required: false,
+            schema: { type: "string", maxLength: 255 },
+          },
+          {
+            name: "plot",
+            in: "query",
+            required: false,
+            schema: { type: "string", maxLength: 255 },
+          },
+          {
+            name: "characters",
+            in: "query",
+            required: false,
+            schema: { type: "string", maxLength: 255 },
+          },
+          {
+            name: "personNames",
+            in: "query",
+            required: false,
+            schema: { type: "string", maxLength: 255 },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "pageSize",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated structured search results",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          uri: { type: "string", example: "/titles/tt0133093" },
+                          title: { type: "string", example: "The Matrix" },
+                        },
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid filters or pagination parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+          "401": {
+            description: "Authentication required",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
+        "/titles/popular-actors": {
+      get: {
+        tags: ["Titles"],
+        summary: "Find popular actors in a title",
+        description:
+          "Returns actors and actresses credited in an exact title match, ordered by their overall IMDb person rating. Results are paginated.",
+        parameters: [
+          {
+            name: "title",
+            in: "query",
+            required: true,
+            schema: { type: "string", maxLength: 255, example: "The Dark Knight" },
+          },
+          {
+            name: "page",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 1 },
+          },
+          {
+            name: "pageSize",
+            in: "query",
+            required: false,
+            schema: { type: "integer", minimum: 1, default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Paginated list of actors and actresses",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    items: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          uri: { type: "string", example: "/people/nm0001173" },
+                          name: { type: "string", example: "Aaron Eckhart" },
+                          rating: { type: "number", example: 9.1 },
+                          numberOfVotes: { type: "integer", example: 3210389 },
+                        },
+                      },
+                    },
+                    pagination: {
+                      $ref: "#/components/schemas/Pagination",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid title or pagination parameters",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Error" },
+              },
+            },
+          },
+        },
+      },
+    },
     "/titles/similar": {
         get: {
           tags: ["Titles"],
