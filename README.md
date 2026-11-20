@@ -27,6 +27,9 @@ The following table describes the current API scope.
 | `/people/coplayers?name={name}` | GET | Find actors who appeared in movies with a specified actor | Implemented |
 | `/users` | POST | Register a new user | Implemented |
 | `/users/me` | GET | Retrieve the authenticated user's profile | Implemented |
+| `/users/me` | PATCH | Change the authenticated user's username | Implemented |
+| `/users/me` | DELETE | Delete the authenticated user's account | Implemented |
+| `/users/me/password` | PATCH | Change the authenticated user's password | Implemented |
 | `/auth/login` | POST | Log in and receive an authentication cookie | Implemented |
 | `/auth/logout` | POST | Log out and clear the authentication cookie | Implemented |
 | `/users/me/bookmarks/media` | GET | List the user's bookmarked titles | Implemented |

@@ -140,3 +140,97 @@ export interface RegistrationInput {
       issues: [],
     };
   }
+
+  export interface PasswordChangeInput {
+    currentPassword: string;
+    newPassword: string;
+  }
+
+  export function validateUsernameUpdate(body: unknown): {
+    data?: { username: string };
+    issues: ValidationIssue[];
+  } {
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return {
+        issues: [
+          { field: "body", message: "Request body must be a JSON object" },
+        ],
+      };
+    }
+
+    const input = body as Record<string, unknown>;
+
+    if (typeof input.username !== "string") {
+      return {
+        issues: [
+          { field: "username", message: "Username must be a string" },
+        ],
+      };
+    }
+
+    const username = input.username.trim().toLowerCase();
+
+    if (!/^[a-z0-9_.-]{3,50}$/.test(username)) {
+      return {
+        issues: [
+          {
+            field: "username",
+            message:
+              "Username must be 3–50 characters and contain only letters, numbers, dots, underscores or hyphens",
+          },
+        ],
+      };
+    }
+
+    return { data: { username }, issues: [] };
+  }
+
+  export function validatePasswordChange(body: unknown): {
+    data?: PasswordChangeInput;
+    issues: ValidationIssue[];
+  } {
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return {
+        issues: [
+          { field: "body", message: "Request body must be a JSON object" },
+        ],
+      };
+    }
+
+    const input = body as Record<string, unknown>;
+    const issues: ValidationIssue[] = [];
+
+    if (
+      typeof input.currentPassword !== "string" ||
+      input.currentPassword.length < 1 ||
+      input.currentPassword.length > 128
+    ) {
+      issues.push({
+        field: "currentPassword",
+        message: "Current password must be 1–128 characters long",
+      });
+    }
+
+    if (
+      typeof input.newPassword !== "string" ||
+      input.newPassword.length < 8 ||
+      input.newPassword.length > 128
+    ) {
+      issues.push({
+        field: "newPassword",
+        message: "New password must be 8–128 characters long",
+      });
+    }
+
+    if (issues.length > 0) {
+      return { issues };
+    }
+
+    return {
+      data: {
+        currentPassword: input.currentPassword as string,
+        newPassword: input.newPassword as string,
+      },
+      issues: [],
+    };
+  }

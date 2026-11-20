@@ -856,6 +856,84 @@ export const openApiSpec = {
           "401": { description: "Authentication required or invalid token" },
         },
       },
+      patch: {
+        tags: ["Users"],
+        summary: "Change the authenticated user's username",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["username"],
+                properties: {
+                  username: { type: "string", example: "newname" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Updated user information",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/PublicUser" },
+              },
+            },
+          },
+          "400": { description: "Invalid username" },
+          "401": { description: "Authentication required or invalid token" },
+          "409": { description: "Username already exists" },
+        },
+      },
+      delete: {
+        tags: ["Users"],
+        summary: "Delete the authenticated user's account",
+        description:
+          "Deletes the account together with its bookmarks, ratings and search history, and clears the authentication cookie.",
+        security: [{ cookieAuth: [] }],
+        responses: {
+          "204": { description: "Account deleted" },
+          "401": { description: "Authentication required or invalid token" },
+        },
+      },
+    },
+    "/users/me/password": {
+      patch: {
+        tags: ["Users"],
+        summary: "Change the authenticated user's password",
+        security: [{ cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["currentPassword", "newPassword"],
+                properties: {
+                  currentPassword: { type: "string", example: "OldPassword123!" },
+                  newPassword: {
+                    type: "string",
+                    minLength: 8,
+                    maxLength: 128,
+                    example: "NewPassword456!",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "204": { description: "Password changed" },
+          "400": { description: "Invalid password data" },
+          "401": {
+            description:
+              "Authentication required, invalid token or incorrect current password",
+          },
+        },
+      },
     },
     "/users/me/bookmarks/media": {
       get: {
