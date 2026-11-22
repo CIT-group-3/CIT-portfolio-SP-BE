@@ -41,9 +41,9 @@ usersRouter.post("/", async (req, res, next) => {
 
       return res
         .status(201)
-        .location(`/users/${user.id}`)
+        .location("/users/me")
         .json({
-          uri: `/users/${user.id}`,
+          uri: "/users/me",
           username: user.username,
         });
     } catch (error) {
@@ -77,7 +77,7 @@ usersRouter.get("/me", requireAuth, async (req, res, next) => {
       }
 
       return res.status(200).json({
-        uri: `/users/${user.id}`,
+        uri: "/users/me",
         username: user.username,
       });
     } catch (error) {
@@ -111,7 +111,7 @@ usersRouter.patch("/me", requireAuth, async (req, res, next) => {
       }
 
       return res.status(200).json({
-        uri: `/users/${user.id}`,
+        uri: "/users/me",
         username: user.username,
       });
     } catch (error) {

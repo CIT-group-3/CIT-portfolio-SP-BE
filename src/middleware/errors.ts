@@ -51,6 +51,17 @@ import type {
       });
     }
   
+    // express.json rejects a body that is not valid JSON.
+    if (error.type === "entity.parse.failed") {
+      return res.status(400).json({
+        error: {
+          status: 400,
+          code: "VALIDATION_ERROR",
+          message: "Request body must be valid JSON",
+        },
+      });
+    }
+  
     // Log the actual error on the server, never expose its details to clients.
     console.error(error);
   

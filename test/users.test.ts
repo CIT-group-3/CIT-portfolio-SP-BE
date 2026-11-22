@@ -42,7 +42,7 @@ import {
       expect(response.status).toBe(201);
       expect(response.headers.location).toBe(response.body.uri);
       expect(response.body).toMatchObject({
-        uri: expect.stringMatching(/^\/users\/\d+$/),
+        uri: "/users/me",
         username,
       });
 
@@ -101,6 +101,16 @@ import {
           username: `short-${randomUUID()}`,
           password: "123",
         });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects a malformed JSON body", async () => {
+      const response = await request(app)
+        .post("/users")
+        .set("Content-Type", "application/json")
+        .send("{bad");
 
       expect(response.status).toBe(400);
       expect(response.body.error.code).toBe("VALIDATION_ERROR");

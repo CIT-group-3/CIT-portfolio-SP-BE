@@ -54,7 +54,7 @@ export const openApiSpec = {
       PublicUser: {
         type: "object",
         properties: {
-          uri: { type: "string", example: "/users/1" },
+          uri: { type: "string", example: "/users/me" },
           username: { type: "string", example: "manualtest" },
         },
       },
