@@ -63,7 +63,7 @@ describe("Account management API", () => {
       .expect(200);
 
     expect(response.body.username).toBe(renamed);
-    expect(response.body.uri).toMatch(/^\/users\/\d+$/);
+    expect(response.body.uri).toBe("/users/me");
   });
 
   it("rejects an invalid username", async () => {

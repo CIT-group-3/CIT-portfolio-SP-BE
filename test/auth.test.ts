@@ -29,7 +29,7 @@ describe("Authentication API", () => {
       .expect(200);
 
     expect(response.body).toEqual({
-      uri: expect.stringMatching(/^\/users\/\d+$/),
+      uri: "/users/me",
       username,
     });
 
@@ -91,7 +91,7 @@ describe("Authentication API", () => {
       .expect(200);
 
     expect(response.body).toEqual({
-      uri: expect.stringMatching(/^\/users\/\d+$/),
+      uri: "/users/me",
       username,
     });
   });

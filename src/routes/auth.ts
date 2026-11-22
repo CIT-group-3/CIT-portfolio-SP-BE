@@ -45,7 +45,7 @@ authRouter.post("/login", async (req, res, next) => {
     });
 
     return res.status(200).json({
-      uri: `/users/${user.id}`,
+      uri: "/users/me",
       username: user.username,
     });
   } catch (error) {
